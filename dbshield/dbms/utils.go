@@ -2,6 +2,7 @@ package dbms
 
 import (
 	"crypto/tls"
+	"encoding/binary"
 	"net"
 
 	// mysql orm
@@ -300,6 +301,12 @@ func threeByteBigEndianToInt(data []byte) uint {
 	return uint(data[2])*65536 + uint(data[1])*256 + uint(data[0])
 }
 
+func fourByteBigEndianToIP(data []byte) string {
+	ip := make(net.IP, 4)
+	binary.BigEndian.PutUint32(ip, binary.BigEndian.Uint32(data))
+	return ip.String()
+}
+
 //processContext will handle context depending on running mode
 func processContext(context sql.QueryContext) (err error) {
 	logger.Debugf("Query: %s", context.Query)
@@ -357,9 +364,7 @@ func recordQueryAction(context sql.QueryContext, action string) error {
 		var queryAction config.QueryAction
 		queryAction.Query = string(context.Query)
 		queryAction.User = string(context.User)
-
-		logger.Warningf("Client: %s", context.Client)
-		// queryAction.Client = string(context.Client)
+		queryAction.Client = fourByteBigEndianToIP(context.Client)
 		queryAction.Db = string(context.Database)
 		queryAction.Time = context.Time
 		queryAction.Action = action
