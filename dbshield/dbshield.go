@@ -179,6 +179,7 @@ func Start() (err error) {
 		config.Config.TargetIP,
 		config.Config.TargetPort)
 	logger.Infof("Protect: %v", !config.Config.Learning)
+	logger.Infof("Recording queries: %v", config.Config.LocalQueryRecord)
 	go mainListner()
 	signalHandler()
 	return nil

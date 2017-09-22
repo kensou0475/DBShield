@@ -57,6 +57,17 @@ httpPort: 8070
 httpPassword: ChangeMe
 
 #############################
+### Query Record DB       ###
+#############################
+
+# Record Qurery to local DB(default: no)
+LocalQueryRecord: no
+# DBMS type(default: mysql, ONLY support mysql now)
+localDbms: mysql
+# DBMS DSN
+localDbDsn: root:password@tcp(localhost:3306)/dbshield?charset=utf8
+
+#############################
 ### Protect               ###
 #############################
 

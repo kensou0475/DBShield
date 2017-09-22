@@ -4,6 +4,9 @@ import (
 	"crypto/tls"
 	"net"
 
+	// mysql orm
+	"github.com/astaxie/beego/orm"
+
 	"github.com/nim4/DBShield/dbshield/config"
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/sql"
@@ -301,12 +304,23 @@ func threeByteBigEndianToInt(data []byte) uint {
 func processContext(context sql.QueryContext) (err error) {
 	logger.Debugf("Query: %s", context.Query)
 
+	var action string
 	if config.Config.Learning {
+		action = "learning"
+		// record query and action
+		recordQueryAction(context, action)
 		return training.AddToTrainingSet(context)
 	}
 	if config.Config.ActionFunc != nil && !training.CheckQuery(context) {
+		action = "drop"
+		// record query and action
+		recordQueryAction(context, action)
 		return config.Config.ActionFunc()
 	}
+	action = "pass"
+	// record query and action
+	recordQueryAction(context, action)
+
 	return nil
 }
 
@@ -329,4 +343,32 @@ func turnSSL(client net.Conn, server net.Conn, certificate tls.Certificate) (net
 	}
 	logger.Debug("Server handshake done")
 	return tlsConnClient, tlsConnServer, nil
+}
+
+func recordQueryAction(context sql.QueryContext, action string) error {
+	if !config.Config.LocalQueryRecord {
+		return nil
+	}
+	logger.Debugf("action: %s", action)
+
+	// 异步记录
+	go func() {
+		o := orm.NewOrm()
+		var queryAction config.QueryAction
+		queryAction.Query = string(context.Query)
+		queryAction.User = string(context.User)
+
+		logger.Warningf("Client: %s", context.Client)
+		// queryAction.Client = string(context.Client)
+		queryAction.Db = string(context.Database)
+		queryAction.Time = context.Time
+		queryAction.Action = action
+		id, err := o.Insert(&queryAction)
+		if err != nil {
+			logger.Warningf("RecordQuery: %s", err.Error())
+		} else {
+			logger.Debugf("Query saved, ID: %d", id)
+		}
+	}()
+	return nil
 }
