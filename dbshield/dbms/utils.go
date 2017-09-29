@@ -2,16 +2,13 @@ package dbms
 
 import (
 	"crypto/tls"
-	"encoding/binary"
 	"net"
-
-	// mysql orm
-	"github.com/astaxie/beego/orm"
 
 	"github.com/nim4/DBShield/dbshield/config"
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/sql"
 	"github.com/nim4/DBShield/dbshield/training"
+	"github.com/qiwihui/DBShield/dbshield/db"
 )
 
 var decodingTable = [...]byte{
@@ -301,12 +298,6 @@ func threeByteBigEndianToInt(data []byte) uint {
 	return uint(data[2])*65536 + uint(data[1])*256 + uint(data[0])
 }
 
-func fourByteBigEndianToIP(data []byte) string {
-	ip := make(net.IP, 4)
-	binary.BigEndian.PutUint32(ip, binary.BigEndian.Uint32(data))
-	return ip.String()
-}
-
 //processContext will handle context depending on running mode
 func processContext(context sql.QueryContext) (err error) {
 	logger.Debugf("Query: %s", context.Query)
@@ -315,18 +306,24 @@ func processContext(context sql.QueryContext) (err error) {
 	if config.Config.Learning {
 		action = "learning"
 		// record query and action
-		recordQueryAction(context, action)
+		if config.Config.LocalQueryRecord {
+			db.RecordQueryAction(context, action)
+		}
 		return training.AddToTrainingSet(context)
 	}
 	if config.Config.ActionFunc != nil && !training.CheckQuery(context) {
 		action = "drop"
 		// record query and action
-		recordQueryAction(context, action)
+		if config.Config.LocalQueryRecord {
+			db.RecordQueryAction(context, action)
+		}
 		return config.Config.ActionFunc()
 	}
 	action = "pass"
 	// record query and action
-	recordQueryAction(context, action)
+	if config.Config.LocalQueryRecord {
+		db.RecordQueryAction(context, action)
+	}
 
 	return nil
 }
@@ -350,30 +347,4 @@ func turnSSL(client net.Conn, server net.Conn, certificate tls.Certificate) (net
 	}
 	logger.Debug("Server handshake done")
 	return tlsConnClient, tlsConnServer, nil
-}
-
-func recordQueryAction(context sql.QueryContext, action string) error {
-	if !config.Config.LocalQueryRecord {
-		return nil
-	}
-	logger.Debugf("action: %s", action)
-
-	// 异步记录
-	go func() {
-		o := orm.NewOrm()
-		var queryAction config.QueryAction
-		queryAction.Query = string(context.Query)
-		queryAction.User = string(context.User)
-		queryAction.Client = fourByteBigEndianToIP(context.Client)
-		queryAction.Db = string(context.Database)
-		queryAction.Time = context.Time
-		queryAction.Action = action
-		id, err := o.Insert(&queryAction)
-		if err != nil {
-			logger.Warningf("RecordQuery: %s", err.Error())
-		} else {
-			logger.Debugf("Query saved, ID: %d", id)
-		}
-	}()
-	return nil
 }

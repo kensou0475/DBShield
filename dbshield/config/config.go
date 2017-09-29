@@ -13,6 +13,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/utils"
+	"github.com/qiwihui/DBShield/dbshield/db"
 	"github.com/spf13/viper"
 )
 
@@ -62,17 +63,6 @@ type Configurations struct {
 	LocalQueryRecord bool
 	LocalDbms        string
 	LocalDbDsn       string
-}
-
-// QueryAction query and action
-type QueryAction struct {
-	ID     int
-	Query  string    `orm:"column(query);null;type(text)"`
-	User   string    `orm:"column(user);null;size(128)"`
-	Client string    `orm:"column(client);null;size(128)"`
-	Db     string    `orm:"column(db);null;size(128)"`
-	Time   time.Time `orm:"column(time);type(datetime);size(6)"`
-	Action string    `orm:"column(action);size(32)"`
 }
 
 //Config holds current configs
@@ -244,6 +234,7 @@ func configLocalDb() error {
 	var err error
 	Config.LocalQueryRecord = viper.GetBool("localQueryRecord")
 	if Config.LocalQueryRecord {
+		// 记录
 		Config.LocalDbms, err = strConfig("localDbms")
 		if err != nil {
 			return err
@@ -260,10 +251,19 @@ func configLocalDb() error {
 			logger.Debugf("%s", err.Error())
 		}
 		// 注册定义的model
-		orm.RegisterModel(new(QueryAction))
+		orm.RegisterModel(new(db.QueryAction))
+		orm.RegisterModel(new(db.Pattern))
+		orm.RegisterModel(new(db.Abnormal))
+		orm.RegisterModel(new(db.State))
 
 		// 创建table
-		// orm.RunSyncdb("default", false, true)
+		// Database alias.
+		name := "default"
+		// Drop table and re-create.
+		force := true
+		// Print log.
+		verbose := true
+		orm.RunSyncdb(name, force, verbose)
 
 	} else {
 		Config.LocalDbms = strConfigDefualt("localDbms", "mysql")

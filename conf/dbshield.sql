@@ -16,12 +16,34 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Current Database: `dbshield`
+-- Table structure for table `abnormal`
 --
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `dbshield` /*!40100 DEFAULT CHARACTER SET utf8 */;
+DROP TABLE IF EXISTS `abnormal`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `abnormal` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `key` text NOT NULL,
+  `value` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
-USE `dbshield`;
+--
+-- Table structure for table `pattern`
+--
+
+DROP TABLE IF EXISTS `pattern`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `pattern` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `key` text NOT NULL,
+  `value` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `query_action`
@@ -39,7 +61,22 @@ CREATE TABLE `query_action` (
   `time` datetime(6) DEFAULT NULL,
   `action` varchar(32) DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2042 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=7904 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `state`
+--
+
+DROP TABLE IF EXISTS `state`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `state` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `QueryCounter` bigint(11) NOT NULL DEFAULT '0',
+  `AbnormalCounter` bigint(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -51,4 +88,4 @@ CREATE TABLE `query_action` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-09-22 11:39:59
+-- Dump completed on 2017-09-29 16:00:59
