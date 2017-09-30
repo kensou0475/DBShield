@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"net"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -24,15 +23,16 @@ type BoltDB struct {
 	name string
 }
 
-func fourByteBigEndianToIP(data []byte) string {
-	ip := make(net.IP, 4)
-	binary.BigEndian.PutUint32(ip, binary.BigEndian.Uint32(data))
-	return ip.String()
-}
-
 // RecordQueryAction record query and action
 func (m *BoltDB) RecordQueryAction(context sql.QueryContext, action string) error {
 	logger.Debugf("action: %s", action)
+	// dbCon.Update(func(tx *bolt.Tx) error {
+	// 	b := tx.Bucket([]byte("abnormal"))
+	// 	if b == nil {
+	// 		panic("Invalid DB")
+	// 	}
+	// 	return nil
+	// })
 	return errors.New("Not Impletement")
 }
 
@@ -185,7 +185,7 @@ func (m *BoltDB) AddPattern(pattern []byte, context sql.QueryContext) error {
 }
 
 // CheckQuery check if Query exist
-func (m *BoltDB) CheckQuery(context sql.QueryContext) bool {
+func (m *BoltDB) CheckQuery(context sql.QueryContext, checkUser bool, checkSource bool) bool {
 	atomic.AddUint64(&QueryCounter, 1)
 	pattern := sql.Pattern(context.Query)
 	if err := dbCon.View(func(tx *bolt.Tx) error {
@@ -197,24 +197,24 @@ func (m *BoltDB) CheckQuery(context sql.QueryContext) bool {
 			return errInvalidPattern
 		}
 
-		// key := bytes.Buffer{}
-		// if config.Config.CheckUser {
-		// 	key.Write(pattern)
-		// 	key.WriteString("_user_")
-		// 	key.Write(context.User)
-		// 	if b.Get(key.Bytes()) == nil {
-		// 		return errInvalidUser
-		// 	}
-		// }
-		// if config.Config.CheckSource {
-		// 	key.Reset()
-		// 	key.Write(pattern)
-		// 	key.WriteString("_client_")
-		// 	key.Write(context.Client)
-		// 	if b.Get(key.Bytes()) == nil {
-		// 		return errInvalidClient
-		// 	}
-		// }
+		key := bytes.Buffer{}
+		if checkUser {
+			key.Write(pattern)
+			key.WriteString("_user_")
+			key.Write(context.User)
+			if b.Get(key.Bytes()) == nil {
+				return errInvalidUser
+			}
+		}
+		if checkSource {
+			key.Reset()
+			key.Write(pattern)
+			key.WriteString("_client_")
+			key.Write(context.Client)
+			if b.Get(key.Bytes()) == nil {
+				return errInvalidClient
+			}
+		}
 		return nil
 	}); err != nil {
 		logger.Warning(err)

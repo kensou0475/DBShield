@@ -25,6 +25,7 @@ const (
 
 func closeHandlers() {
 
+	//TODO NEED to verify
 	if config.Config.LocalDB != nil {
 		config.Config.LocalDB.UpdateState()
 		config.Config.LocalDB.SyncAndClose()

@@ -1,7 +1,9 @@
 package db
 
 import (
+	"encoding/binary"
 	"errors"
+	"net"
 	"time"
 
 	"github.com/qiwihui/DBShield/dbshield/sql"
@@ -15,6 +17,8 @@ var (
 	AbnormalCounter = uint64(0)
 
 	errInvalidPattern = errors.New("Invalid pattern")
+	errInvalidUser    = errors.New("Invalid user")
+	errInvalidClient  = errors.New("Invalid client")
 )
 
 //BASE interface should get implemented with every added store database(Boltdb, MySQL, Postgre & etc.) structure
@@ -29,7 +33,7 @@ type BASE interface {
 	PutPattern([]byte, []byte) error
 	DeletePattern([]byte) error
 	Purge() error
-	CheckQuery(sql.QueryContext) bool
+	CheckQuery(sql.QueryContext, bool, bool) bool
 	UpdateState() error
 	SyncAndClose() error
 }
@@ -44,4 +48,10 @@ func GenerateLocalDB(dbName string) BASE {
 	default:
 		return nil
 	}
+}
+
+func fourByteBigEndianToIP(data []byte) string {
+	ip := make(net.IP, 4)
+	binary.BigEndian.PutUint32(ip, binary.BigEndian.Uint32(data))
+	return ip.String()
 }

@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-	// mysql orm
 
 	// mysql driver
 	_ "github.com/go-sql-driver/mysql"
@@ -258,15 +257,13 @@ func configLocalDb() error {
 		err = fmt.Errorf("Invalid 'localDbms' cofiguration")
 		return err
 	}
-	logger.Infof("DBConfig: %s => %s", dbName, dbPath)
+	logger.Infof("LocalDBConfig: %s => %s", dbName, dbPath)
 	err = Config.LocalDB.InitialDB(dbPath, Config.SyncInterval, Config.Timeout)
 	if err != nil {
 		return err
 	}
 
 	Config.LocalQueryRecord = viper.GetBool("localQueryRecord")
-	// Config.LocalDbms = strConfigDefualt("localDbms", "mysql")
-	// Config.LocalDbDsn = strConfigDefualt("localDbDsn", "root:password@tcp(localhost:3306)/dbshield?charset=utf8")
 	return nil
 }
 
