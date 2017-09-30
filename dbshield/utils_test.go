@@ -7,9 +7,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/nim4/DBShield/dbshield/config"
-	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/mock"
+	"github.com/qiwihui/DBShield/dbshield/config"
+	"github.com/qiwihui/DBShield/dbshield/logger"
 )
 
 func TestDbNameToStruct(t *testing.T) {

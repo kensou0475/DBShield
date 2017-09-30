@@ -27,9 +27,6 @@ targetPort: 0
 tlsPrivateKey:  cert/server-key.pem
 tlsCertificate: cert/server-cert.pem
 
-# Directory to save internal database(default: in model directory under OS's temp directory)
-dbDir: "/tmp/model/"
-
 # Connection timeout
 # Valid units are "ns", "us" (or "µs"), "ms", "s", "m" and "h". (default: 5s)
 timeout: 5s
@@ -60,12 +57,14 @@ httpPassword: ChangeMe
 ### Query Record DB       ###
 #############################
 
+# Local DBMS type(default: boltdb, support boltdb, mysql )
+localDbms: boltdb
+# Directory to save internal database for BoltDB(default: in model directory under OS's temp directory)
+dbDir: "/tmp/model/"
+# DBMS DSN, for other dbms
+localDbDsn: root:password@tcp(localhost:3306)/dbshield?charset=utf8
 # Record Qurery to local DB(default: no)
 LocalQueryRecord: no
-# DBMS type(default: mysql, ONLY support mysql now)
-localDbms: mysql
-# DBMS DSN
-localDbDsn: root:password@tcp(localhost:3306)/dbshield?charset=utf8
 
 #############################
 ### Protect               ###

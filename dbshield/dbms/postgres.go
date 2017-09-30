@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nim4/DBShield/dbshield/logger"
-	"github.com/nim4/DBShield/dbshield/sql"
+	"github.com/qiwihui/DBShield/dbshield/logger"
+	"github.com/qiwihui/DBShield/dbshield/sql"
 )
 
 //Postgres DBMS

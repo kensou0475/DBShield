@@ -4,11 +4,10 @@ import (
 	"crypto/tls"
 	"net"
 
-	"github.com/nim4/DBShield/dbshield/config"
-	"github.com/nim4/DBShield/dbshield/logger"
-	"github.com/nim4/DBShield/dbshield/sql"
-	"github.com/nim4/DBShield/dbshield/training"
-	"github.com/qiwihui/DBShield/dbshield/db"
+	"github.com/qiwihui/DBShield/dbshield/config"
+	"github.com/qiwihui/DBShield/dbshield/logger"
+	"github.com/qiwihui/DBShield/dbshield/sql"
+	"github.com/qiwihui/DBShield/dbshield/training"
 )
 
 var decodingTable = [...]byte{
@@ -307,7 +306,7 @@ func processContext(context sql.QueryContext) (err error) {
 		action = "learning"
 		// record query and action
 		if config.Config.LocalQueryRecord {
-			db.RecordQueryAction(context, action)
+			config.Config.LocalDB.RecordQueryAction(context, action)
 		}
 		return training.AddToTrainingSet(context)
 	}
@@ -315,14 +314,14 @@ func processContext(context sql.QueryContext) (err error) {
 		action = "drop"
 		// record query and action
 		if config.Config.LocalQueryRecord {
-			db.RecordQueryAction(context, action)
+			config.Config.LocalDB.RecordQueryAction(context, action)
 		}
 		return config.Config.ActionFunc()
 	}
 	action = "pass"
 	// record query and action
 	if config.Config.LocalQueryRecord {
-		db.RecordQueryAction(context, action)
+		config.Config.LocalDB.RecordQueryAction(context, action)
 	}
 
 	return nil

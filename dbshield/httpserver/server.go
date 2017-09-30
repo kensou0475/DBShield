@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/gorilla/securecookie"
-	"github.com/nim4/DBShield/dbshield/config"
-	"github.com/nim4/DBShield/dbshield/logger"
-	"github.com/nim4/DBShield/dbshield/training"
+	"github.com/qiwihui/DBShield/dbshield/config"
+	"github.com/qiwihui/DBShield/dbshield/db"
+	"github.com/qiwihui/DBShield/dbshield/logger"
 )
 
 var cookieHandler = securecookie.New(
@@ -70,8 +70,8 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		Total    uint64
 		Abnormal uint64
 	}{
-		training.QueryCounter,
-		training.AbnormalCounter,
+		db.QueryCounter,
+		db.AbnormalCounter,
 	})
 	w.Write(out)
 }

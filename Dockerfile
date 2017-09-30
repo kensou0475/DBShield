@@ -3,8 +3,8 @@ MAINTAINER Nima Ghotbi <ghotbi.nima@gmail.com>
 
 ENV GOPATH /go
 
-COPY . /go/src/github.com/nim4/DBShield
-WORKDIR /go/src/github.com/nim4/DBShield
+COPY . /go/src/github.com/qiwihui/DBShield
+WORKDIR /go/src/github.com/qiwihui/DBShield
 COPY conf/dbshield.yml /etc/dbshield.yml
 
 RUN openssl genrsa -out cert/server-key.pem 2048

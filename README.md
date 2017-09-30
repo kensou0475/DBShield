@@ -15,16 +15,16 @@ Protects your data by inspecting incoming queries from your application server a
 
 For example, this is how web server normally interacts with database server:
 
-![Sample Web Server and DB](https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_01.png)
+![Sample Web Server and DB](https://raw.githubusercontent.com/qiwihui/DBShield/master/misc/how_01.png)
 
 By adding DBShield in front of database server we can protect it against abnormal queries. To detect abnormal queries we first run DBShield in learning mode. Learning mode lets any query pass but it records information about it (pattern, username, time and source) into the internal database.
 
-![Learning mode](https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_02.png)
+![Learning mode](https://raw.githubusercontent.com/qiwihui/DBShield/master/misc/how_02.png)
 
 
 After collecting enough patterns we can run DBShield in protect mode. Protect mode can distinguish abnormal query pattern, user and source and take action based on configurations.
 
-![Protect mode](https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_03.png)
+![Protect mode](https://raw.githubusercontent.com/qiwihui/DBShield/master/misc/how_03.png)
 
 ---
 ## Demo
@@ -62,14 +62,14 @@ $ go run main.go
 
 **Web Interface**
 
-![Web UI](https://raw.githubusercontent.com/nim4/DBShield/master/misc/graph.png)
+![Web UI](https://raw.githubusercontent.com/qiwihui/DBShield/master/misc/graph.png)
 
 ---
 ## Installation
 
 Get it
 ```
-$ go get -u github.com/nim4/DBShield
+$ go get -u github.com/qiwihui/DBShield
 ```
 
 Then you can see help using "-h" argument:
@@ -91,7 +91,7 @@ and run it with your configuration, like:
 ```
 $ $GOPATH/bin/DBShield -c config.yml
 ```
-see [sample configuration  file](https://github.com/nim4/DBShield/blob/master/conf/dbshield.yml)
+see [sample configuration  file](https://github.com/qiwihui/DBShield/blob/master/conf/dbshield.yml)
 
 
 >:warning: **WARNING:**
@@ -120,5 +120,5 @@ see [sample configuration  file](https://github.com/nim4/DBShield/blob/master/co
  - Get 90% test coverage
  - Support Oracle SSL
 
- [YesImg]: https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png
- [NoImg]: https://raw.githubusercontent.com/nim4/DBShield/master/misc/no.png
+ [YesImg]: https://raw.githubusercontent.com/qiwihui/DBShield/master/misc/yes.png
+ [NoImg]: https://raw.githubusercontent.com/qiwihui/DBShield/master/misc/no.png

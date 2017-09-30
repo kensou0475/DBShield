@@ -7,18 +7,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"os"
-	"path"
 	"strconv"
-	"strings"
-	"time"
 
-	"github.com/boltdb/bolt"
-	"github.com/nim4/DBShield/dbshield/config"
-	"github.com/nim4/DBShield/dbshield/httpserver"
-	"github.com/nim4/DBShield/dbshield/logger"
-	"github.com/nim4/DBShield/dbshield/sql"
-	"github.com/nim4/DBShield/dbshield/training"
+	"github.com/qiwihui/DBShield/dbshield/config"
+	"github.com/qiwihui/DBShield/dbshield/httpserver"
+	"github.com/qiwihui/DBShield/dbshield/logger"
 )
 
 //Version of the library
@@ -45,77 +38,22 @@ func ShowConfig() error {
 
 //Purge local database
 func Purge() error {
-	return os.Remove(path.Join(config.Config.DBDir,
-		config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
+	return config.Config.LocalDB.Purge()
 }
 
 //Patterns lists the captured patterns
 func Patterns() (count int) {
-	initModel(
-		path.Join(config.Config.DBDir,
-			config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
-
-	training.DBCon.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("pattern"))
-		if b != nil {
-			return b.ForEach(func(k, v []byte) error {
-				if strings.Index(string(k), "_client_") == -1 && strings.Index(string(k), "_user_") == -1 {
-					fmt.Printf(
-						`-----Pattern: 0x%x
-Sample: %s
-`,
-						k,
-						v,
-					)
-					count++
-				}
-				return nil
-			})
-		}
-		return nil
-	})
-	return
+	return config.Config.LocalDB.Patterns()
 }
 
 //Abnormals detected querties
 func Abnormals() (count int) {
-	initModel(
-		path.Join(config.Config.DBDir,
-			config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
-
-	training.DBCon.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("abnormal"))
-		if b != nil {
-			return b.ForEach(func(k, v []byte) error {
-				var c sql.QueryContext
-				c.Unmarshal(v)
-				fmt.Printf("[%s] [User: %s] [Database: %s] %s\n",
-					c.Time.Format(time.RFC1123),
-					c.User,
-					c.Database,
-					c.Query)
-				count++
-				return nil
-			})
-		}
-		return nil
-	})
-	return count
+	return config.Config.LocalDB.Abnormals()
 }
 
 //RemovePattern deletes a pattern from captured patterns DB
 func RemovePattern(pattern string) error {
-	initModel(
-		path.Join(config.Config.DBDir,
-			config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
-
-	return training.DBCon.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("pattern"))
-		if b != nil {
-			return b.Delete([]byte(pattern))
-		}
-		return nil
-	})
+	return config.Config.LocalDB.DeletePattern([]byte(pattern))
 }
 
 func postConfig() (err error) {
@@ -165,9 +103,6 @@ func mainListner() error {
 
 //Start the proxy
 func Start() (err error) {
-	initModel(
-		path.Join(config.Config.DBDir,
-			config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
 
 	initLogging()
 	logger.Infof("Config file: %s", configFile)

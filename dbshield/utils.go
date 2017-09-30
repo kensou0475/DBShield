@@ -1,7 +1,6 @@
 package dbshield
 
 import (
-	"encoding/binary"
 	"fmt"
 	"io"
 	"net"
@@ -10,12 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/boltdb/bolt"
-	"github.com/nim4/DBShield/dbshield/config"
-	"github.com/nim4/DBShield/dbshield/dbms"
-	"github.com/nim4/DBShield/dbshield/logger"
-	"github.com/nim4/DBShield/dbshield/training"
-	"github.com/nim4/DBShield/dbshield/utils"
+	"github.com/qiwihui/DBShield/dbshield/config"
+	"github.com/qiwihui/DBShield/dbshield/dbms"
+	"github.com/qiwihui/DBShield/dbshield/logger"
+	"github.com/qiwihui/DBShield/dbshield/utils"
 )
 
 const (
@@ -26,56 +23,11 @@ const (
 	oracle
 )
 
-//initial boltdb database
-func initModel(path string) {
-	logger.Infof("Internal DB: %s", path)
-	if training.DBCon == nil {
-		training.DBCon, _ = bolt.Open(path, 0600, nil)
-		training.DBCon.Update(func(tx *bolt.Tx) error {
-			tx.CreateBucketIfNotExists([]byte("pattern"))
-			tx.CreateBucketIfNotExists([]byte("abnormal"))
-			b, _ := tx.CreateBucketIfNotExists([]byte("state"))
-			v := b.Get([]byte("QueryCounter"))
-			if v != nil {
-				training.QueryCounter = binary.BigEndian.Uint64(v)
-			}
-			v = b.Get([]byte("AbnormalCounter"))
-			if v != nil {
-				training.AbnormalCounter = binary.BigEndian.Uint64(v)
-			}
-			return nil
-		})
-	}
-
-	if config.Config.SyncInterval != 0 {
-		training.DBCon.NoSync = true
-		ticker := time.NewTicker(config.Config.SyncInterval)
-		go func() {
-			for range ticker.C {
-				training.DBCon.Sync()
-			}
-		}()
-	}
-}
-
 func closeHandlers() {
-	if training.DBCon != nil {
-		training.DBCon.Update(func(tx *bolt.Tx) error {
-			//Supplied value must remain valid for the life of the transaction
-			qCount := make([]byte, 8)
-			abCount := make([]byte, 8)
 
-			b := tx.Bucket([]byte("state"))
-			binary.BigEndian.PutUint64(qCount, training.QueryCounter)
-			b.Put([]byte("QueryCounter"), qCount)
-
-			binary.BigEndian.PutUint64(abCount, training.AbnormalCounter)
-			b.Put([]byte("AbnormalCounter"), abCount)
-
-			return nil
-		})
-		training.DBCon.Sync()
-		training.DBCon.Close()
+	if config.Config.LocalDB != nil {
+		config.Config.LocalDB.UpdateState()
+		config.Config.LocalDB.SyncAndClose()
 	}
 	if logger.Output != nil {
 		logger.Output.Close()

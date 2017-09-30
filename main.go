@@ -6,7 +6,7 @@ import (
 	_ "net/http/pprof"
 	"runtime"
 
-	"github.com/nim4/DBShield/dbshield"
+	"github.com/qiwihui/DBShield/dbshield"
 )
 
 func usage(showUsage bool) {

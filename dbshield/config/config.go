@@ -4,16 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"time"
 	// mysql orm
-	"github.com/astaxie/beego/orm"
+
 	// mysql driver
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/nim4/DBShield/dbshield/logger"
-	"github.com/nim4/DBShield/dbshield/utils"
 	"github.com/qiwihui/DBShield/dbshield/db"
+	"github.com/qiwihui/DBShield/dbshield/logger"
+	"github.com/qiwihui/DBShield/dbshield/utils"
 	"github.com/spf13/viper"
 )
 
@@ -34,8 +35,6 @@ type Configurations struct {
 
 	DBType string
 	DB     uint `json:"-"`
-
-	DBDir string
 
 	ListenIP   string
 	ListenPort uint
@@ -60,9 +59,11 @@ type Configurations struct {
 	//Key-> database.table.column
 	//Masks map[string]mask
 
-	LocalQueryRecord bool
 	LocalDbms        string
+	DBDir            string
+	LocalDB          db.BASE
 	LocalDbDsn       string
+	LocalQueryRecord bool
 }
 
 //Config holds current configs
@@ -142,12 +143,6 @@ func configGeneral() (err error) {
 	}
 
 	Config.TLSCertificate, err = strConfig("tlsCertificate")
-	if err != nil {
-		return err
-	}
-
-	Config.DBDir = strConfigDefualt("dbDir", os.TempDir()+"/model")
-	err = os.MkdirAll(Config.DBDir, 0740) //Make dbDir, just in case its not there
 	if err != nil {
 		return err
 	}
@@ -232,44 +227,46 @@ func configHTTP() error {
 
 func configLocalDb() error {
 	var err error
-	Config.LocalQueryRecord = viper.GetBool("localQueryRecord")
-	if Config.LocalQueryRecord {
-		// 记录
-		Config.LocalDbms, err = strConfig("localDbms")
-		if err != nil {
-			return err
-		}
+
+	Config.LocalDbms, err = strConfig("localDbms")
+	if err != nil {
+		return err
+	}
+	dbName := strings.ToLower(Config.LocalDbms)
+	Config.LocalDB = db.GenerateLocalDB(dbName)
+	if Config.LocalDB == nil {
+		return errors.New("err")
+	}
+	var dbPath string
+	logger.Infof("DBConfig: %s", dbName)
+	switch dbName {
+	case "mysql":
 		Config.LocalDbDsn, err = strConfig("localDbDsn")
 		if err != nil {
 			return err
 		}
-		//InitLocalDB initail local db
-		orm.RegisterDriver("mysql", orm.DRMySQL)
+		dbPath = Config.LocalDbDsn
 
-		err := orm.RegisterDataBase("default", Config.LocalDbms, Config.LocalDbDsn, 30)
+	case "boltdb":
+		Config.DBDir = strConfigDefualt("dbDir", os.TempDir()+"/model")
+		err = os.MkdirAll(Config.DBDir, 0740) //Make dbDir, just in case its not there
 		if err != nil {
-			logger.Debugf("%s", err.Error())
+			return err
 		}
-		// 注册定义的model
-		orm.RegisterModel(new(db.QueryAction))
-		orm.RegisterModel(new(db.Pattern))
-		orm.RegisterModel(new(db.Abnormal))
-		orm.RegisterModel(new(db.State))
-
-		// 创建table
-		// Database alias.
-		name := "default"
-		// Drop table and re-create.
-		force := true
-		// Print log.
-		verbose := true
-		orm.RunSyncdb(name, force, verbose)
-
-	} else {
-		Config.LocalDbms = strConfigDefualt("localDbms", "mysql")
-		Config.LocalDbDsn = strConfigDefualt("localDbDsn", "root:password@tcp(localhost:3306)/dbshield?charset=utf8")
+		dbPath = path.Join(Config.DBDir, Config.TargetIP+"_"+Config.DBType) + ".db"
+	default:
+		err = fmt.Errorf("Invalid 'localDbms' cofiguration")
+		return err
+	}
+	logger.Infof("DBConfig: %s => %s", dbName, dbPath)
+	err = Config.LocalDB.InitialDB(dbPath, Config.SyncInterval, Config.Timeout)
+	if err != nil {
+		return err
 	}
 
+	Config.LocalQueryRecord = viper.GetBool("localQueryRecord")
+	// Config.LocalDbms = strConfigDefualt("localDbms", "mysql")
+	// Config.LocalDbDsn = strConfigDefualt("localDbDsn", "root:password@tcp(localhost:3306)/dbshield?charset=utf8")
 	return nil
 }
 
