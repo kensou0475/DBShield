@@ -23,10 +23,10 @@ DROP TABLE IF EXISTS `abnormal`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `abnormal` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `key` text NOT NULL,
-  `value` text NOT NULL,
-  PRIMARY KEY (`id`)
+  `i_d` int(11) NOT NULL AUTO_INCREMENT,
+  `key` longtext NOT NULL,
+  `value` longtext NOT NULL,
+  PRIMARY KEY (`i_d`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -38,10 +38,10 @@ DROP TABLE IF EXISTS `pattern`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `pattern` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `key` text NOT NULL,
-  `value` text NOT NULL,
-  PRIMARY KEY (`id`)
+  `i_d` int(11) NOT NULL AUTO_INCREMENT,
+  `key` longtext,
+  `value` longtext,
+  PRIMARY KEY (`i_d`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -53,15 +53,15 @@ DROP TABLE IF EXISTS `query_action`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `query_action` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `query` text,
+  `i_d` int(11) NOT NULL AUTO_INCREMENT,
+  `query` longtext,
   `user` varchar(128) DEFAULT NULL,
   `client` varchar(128) DEFAULT NULL,
   `db` varchar(128) DEFAULT NULL,
-  `time` datetime(6) DEFAULT NULL,
-  `action` varchar(32) DEFAULT '',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7904 DEFAULT CHARSET=utf8;
+  `time` datetime NOT NULL,
+  `action` varchar(32) NOT NULL DEFAULT '',
+  PRIMARY KEY (`i_d`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -72,10 +72,10 @@ DROP TABLE IF EXISTS `state`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `state` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `QueryCounter` bigint(11) NOT NULL DEFAULT '0',
-  `AbnormalCounter` bigint(11) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
+  `i_d` int(11) NOT NULL AUTO_INCREMENT,
+  `QueryCounter` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `AbnormalCounter` bigint(20) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`i_d`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -88,4 +88,4 @@ CREATE TABLE `state` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-09-29 16:00:59
+-- Dump completed on 2017-09-30 14:39:39
