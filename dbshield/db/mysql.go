@@ -23,7 +23,7 @@ type MySQL struct {
 
 //QueryAction query and action
 type QueryAction struct {
-	ID     int
+	ID     int       `orm:"column(id)"`
 	Query  string    `orm:"column(query);null;type(text)"`
 	User   string    `orm:"column(user);null;size(128)"`
 	Client string    `orm:"column(client);null;size(128)"`
@@ -34,21 +34,21 @@ type QueryAction struct {
 
 //Pattern record trainging set
 type Pattern struct {
-	ID    int
+	ID    int    `orm:"column(id)"`
 	Key   string `orm:"column(key);null;type(text)"`
 	Value string `orm:"column(value);null;type(text)"`
 }
 
 //Abnormal record abnormal set
 type Abnormal struct {
-	ID int
+	ID int `orm:"column(id)"`
 	// Key   string `orm:"column(key);type(text)"`
 	Value string `orm:"column(value);type(text)"`
 }
 
 //State record abnormal set
 type State struct {
-	ID              int
+	ID              int    `orm:"column(id)"`
 	Key             string `orm:"column(key);size(5)"`
 	QueryCounter    uint64 `orm:"column(QueryCounter);type(bigint unsigned)"`
 	AbnormalCounter uint64 `orm:"column(AbnormalCounter);type(bigint unsigned)"`
