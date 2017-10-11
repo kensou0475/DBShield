@@ -25,6 +25,7 @@ DROP TABLE IF EXISTS `abnormal`;
 CREATE TABLE `abnormal` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `value` longtext NOT NULL,
+  `uuid` varchar(36) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -40,8 +41,9 @@ CREATE TABLE `pattern` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `key` longtext,
   `value` longtext,
+  `uuid` varchar(36) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -59,6 +61,7 @@ CREATE TABLE `query_action` (
   `db` varchar(128) DEFAULT NULL,
   `time` datetime NOT NULL,
   `action` varchar(32) NOT NULL DEFAULT '',
+  `uuid` varchar(36) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -75,6 +78,7 @@ CREATE TABLE `state` (
   `key` varchar(5) NOT NULL DEFAULT '',
   `QueryCounter` bigint(20) unsigned NOT NULL DEFAULT '0',
   `AbnormalCounter` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `uuid` varchar(36) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -88,4 +92,4 @@ CREATE TABLE `state` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-10-10 15:43:17
+-- Dump completed on 2017-10-11 14:56:16
