@@ -15,7 +15,7 @@ import (
 )
 
 //Version of the library
-var Version = "1.0.0-beta4"
+var Version = "1.0.0-beta4-qiwihui"
 
 var configFile string
 
