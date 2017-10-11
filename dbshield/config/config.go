@@ -58,6 +58,7 @@ type Configurations struct {
 	//Key-> database.table.column
 	//Masks map[string]mask
 
+	localDbID        string
 	LocalDbms        string
 	DBDir            string
 	LocalDB          db.BASE
@@ -227,12 +228,17 @@ func configHTTP() error {
 func configLocalDb() error {
 	var err error
 
+	Config.localDbID, err = strConfig("localDbID")
+	if err != nil {
+		return err
+	}
+
 	Config.LocalDbms, err = strConfig("localDbms")
 	if err != nil {
 		return err
 	}
 	dbName := strings.ToLower(Config.LocalDbms)
-	Config.LocalDB = db.GenerateLocalDB(dbName)
+	Config.LocalDB = db.GenerateLocalDB(dbName, Config.localDbID)
 	if Config.LocalDB == nil {
 		return errors.New("err")
 	}

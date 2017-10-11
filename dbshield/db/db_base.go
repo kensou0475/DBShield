@@ -39,10 +39,10 @@ type BASE interface {
 }
 
 //GenerateLocalDB generate local db
-func GenerateLocalDB(dbName string) BASE {
+func GenerateLocalDB(dbName string, dbID string) BASE {
 	switch dbName {
 	case "mysql":
-		return new(MySQL)
+		return &MySQL{name: dbName, UUID: dbID}
 	case "boltdb":
 		return new(BoltDB)
 	default:

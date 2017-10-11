@@ -57,6 +57,8 @@ httpPassword: ChangeMe
 ### Query Record DB       ###
 #############################
 
+# 唯一表示数据库
+localDbId: 1
 # Local DBMS type(default: boltdb, support boltdb, mysql )
 localDbms: boltdb
 # Directory to save internal database for BoltDB(default: in model directory under OS's temp directory)

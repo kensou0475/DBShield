@@ -19,6 +19,7 @@ import (
 //MySQL local db
 type MySQL struct {
 	name string
+	UUID string
 }
 
 //QueryAction query and action
@@ -30,6 +31,7 @@ type QueryAction struct {
 	Db     string    `orm:"column(db);null;size(128)"`
 	Time   time.Time `orm:"column(time);type(datetime);size(6)"`
 	Action string    `orm:"column(action);size(32)"`
+	UUID   string    `orm:"column(uuid);size(36)"`
 }
 
 //Pattern record trainging set
@@ -37,6 +39,7 @@ type Pattern struct {
 	ID    int    `orm:"column(id)"`
 	Key   string `orm:"column(key);null;type(text)"`
 	Value string `orm:"column(value);null;type(text)"`
+	UUID  string `orm:"column(uuid);size(36)"`
 }
 
 //Abnormal record abnormal set
@@ -44,6 +47,7 @@ type Abnormal struct {
 	ID int `orm:"column(id)"`
 	// Key   string `orm:"column(key);type(text)"`
 	Value string `orm:"column(value);type(text)"`
+	UUID  string `orm:"column(uuid);size(36)"`
 }
 
 //State record abnormal set
@@ -52,6 +56,7 @@ type State struct {
 	Key             string `orm:"column(key);size(5)"`
 	QueryCounter    uint64 `orm:"column(QueryCounter);type(bigint unsigned)"`
 	AbnormalCounter uint64 `orm:"column(AbnormalCounter);type(bigint unsigned)"`
+	UUID            string `orm:"column(uuid);size(36)"`
 }
 
 // RecordQueryAction record query and action
@@ -68,6 +73,7 @@ func (m *MySQL) RecordQueryAction(context sql.QueryContext, action string) error
 		queryAction.Db = string(context.Database)
 		queryAction.Time = context.Time
 		queryAction.Action = action
+		queryAction.UUID = m.UUID
 		id, err := o.Insert(&queryAction)
 		if err != nil {
 			logger.Warningf("RecordQuery: %s", err.Error())
@@ -86,6 +92,7 @@ func (m *MySQL) RecordAbnormal(context sql.QueryContext) error {
 		var abnormal Abnormal
 		var sx16 = formatPattern(context.Marshal())
 		abnormal.Value = sx16
+		abnormal.UUID = m.UUID
 		id, err := o.Insert(&abnormal)
 		if err == nil {
 			logger.Debugf("Abnormal saved, ID: %d", id)
@@ -112,7 +119,7 @@ func (m *MySQL) PutPattern(pattern []byte, query []byte) error {
 func (m *MySQL) DeletePattern(pattern []byte) error {
 	go func() {
 		o := orm.NewOrm()
-		if num, err := o.Delete(&Pattern{Key: string(pattern)}); err == nil {
+		if num, err := o.Delete(&Pattern{Key: string(pattern), UUID: m.UUID}); err == nil {
 			logger.Debugf("Pattern delete, num: %d", num)
 		} else {
 			logger.Warningf("Pattern delete error: %s", err.Error())
@@ -158,11 +165,12 @@ func (m *MySQL) AddPattern(pattern []byte, context sql.QueryContext) error {
 
 	atomic.AddUint64(&QueryCounter, 1)
 	o := orm.NewOrm()
-	exist := o.QueryTable("pattern").Filter("key", patternString).Exist()
+	exist := o.QueryTable("pattern").Filter("key", patternString).Filter("uuid", m.UUID).Exist()
 	if !exist {
 		var aPattern Pattern
 		aPattern.Key = patternString
 		aPattern.Value = string(context.Query)
+		aPattern.UUID = m.UUID
 		id, err := o.Insert(&aPattern)
 		if err == nil {
 			logger.Debugf("Pattern saved, ID: %d", id)
@@ -176,11 +184,12 @@ func (m *MySQL) AddPattern(pattern []byte, context sql.QueryContext) error {
 	uKey.Write(context.User)
 	uKeyString := formatPattern(uKey.Bytes())
 
-	exist = o.QueryTable("pattern").Filter("key", uKeyString).Exist()
+	exist = o.QueryTable("pattern").Filter("key", uKeyString).Filter("uuid", m.UUID).Exist()
 	if !exist {
 		var aPattern Pattern
 		aPattern.Key = uKeyString
 		aPattern.Value = formatPattern([]byte{0x11})
+		aPattern.UUID = m.UUID
 		id, err := o.Insert(&aPattern)
 		if err == nil {
 			logger.Debugf("Pattern User saved, ID: %d", id)
@@ -195,11 +204,12 @@ func (m *MySQL) AddPattern(pattern []byte, context sql.QueryContext) error {
 	cKey.Write(context.Client)
 	cKeyString := formatPattern(cKey.Bytes())
 
-	exist = o.QueryTable("pattern").Filter("key", cKeyString).Exist()
+	exist = o.QueryTable("pattern").Filter("key", cKeyString).Filter("uuid", m.UUID).Exist()
 	if !exist {
 		var aPattern Pattern
 		aPattern.Key = cKeyString
 		aPattern.Value = formatPattern([]byte{0x11})
+		aPattern.UUID = m.UUID
 		id, err := o.Insert(&aPattern)
 		if err == nil {
 			logger.Debugf("Pattern Source saved, ID: %d", id)
@@ -217,7 +227,7 @@ func (m *MySQL) CheckQuery(context sql.QueryContext, checkUser bool, checkSource
 	pattern := sql.Pattern(context.Query)
 	patternString := formatPattern(pattern)
 	o := orm.NewOrm()
-	exist := o.QueryTable("pattern").Filter("key", patternString).Exist()
+	exist := o.QueryTable("pattern").Filter("key", patternString).Filter("uuid", m.UUID).Exist()
 	if !exist {
 		return false
 	}
@@ -226,7 +236,7 @@ func (m *MySQL) CheckQuery(context sql.QueryContext, checkUser bool, checkSource
 		key.Write(pattern)
 		key.WriteString("_user_")
 		key.Write(context.User)
-		exist := o.QueryTable("pattern").Filter("key", formatPattern(key.Bytes())).Exist()
+		exist := o.QueryTable("pattern").Filter("key", formatPattern(key.Bytes())).Filter("uuid", m.UUID).Exist()
 		if !exist {
 			return false
 		}
@@ -236,7 +246,7 @@ func (m *MySQL) CheckQuery(context sql.QueryContext, checkUser bool, checkSource
 		key.Write(pattern)
 		key.WriteString("_client_")
 		key.Write(context.Client)
-		exist := o.QueryTable("pattern").Filter("key", formatPattern(key.Bytes())).Exist()
+		exist := o.QueryTable("pattern").Filter("key", formatPattern(key.Bytes())).Filter("uuid", m.UUID).Exist()
 		if !exist {
 			return false
 		}
@@ -248,7 +258,7 @@ func (m *MySQL) CheckQuery(context sql.QueryContext, checkUser bool, checkSource
 func (m *MySQL) UpdateState() error {
 	o := orm.NewOrm()
 	var state State
-	err := o.QueryTable("state").Filter("key", "state").One(&state)
+	err := o.QueryTable("state").Filter("key", "state").Filter("uuid", m.UUID).One(&state)
 	if err != nil {
 		if err == orm.ErrMultiRows {
 			// 多条的时候报错
@@ -261,6 +271,7 @@ func (m *MySQL) UpdateState() error {
 			newState.QueryCounter = QueryCounter
 			newState.QueryCounter = AbnormalCounter
 			newState.Key = "state"
+			newState.UUID = m.UUID
 			id, err := o.Insert(&newState)
 			if err == nil {
 				logger.Warning(id)
@@ -284,7 +295,7 @@ func (m *MySQL) UpdateState() error {
 func (m *MySQL) Abnormals() (count int) {
 	var abnormals []*Abnormal
 	o := orm.NewOrm()
-	_, err := o.QueryTable("abnormal").All(&abnormals)
+	_, err := o.QueryTable("abnormal").Filter("uuid", m.UUID).All(&abnormals)
 	if err == nil && len(abnormals) > 0 {
 		logger.Debug("range abnormal")
 		for _, element := range abnormals {
@@ -308,7 +319,7 @@ func (m *MySQL) Patterns() (count int) {
 	logger.Debugf("==> Patterns")
 	var patterns []*Pattern
 	o := orm.NewOrm()
-	_, err := o.QueryTable("pattern").All(&patterns)
+	_, err := o.QueryTable("pattern").Filter("uuid", m.UUID).All(&patterns)
 	if err == nil {
 		logger.Debug(patterns)
 		for _, element := range patterns {
