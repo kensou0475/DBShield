@@ -6,11 +6,19 @@ os:
 go:
   - 1.5
   - 1.6
+  - 1.7
+  - 1.8
+  - 1.9
   - tip
+
+services:
+  - mysql
 
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libpcap-dev
+  - echo "USE mysql;\nUPDATE user SET password=PASSWORD('password') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS dnshield DEFAULT CHARSET utf8 COLLATE utf8_general_ci;'
 
 script:
   - go vet ./...
