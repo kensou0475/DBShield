@@ -22,7 +22,8 @@ before_install:
 
 script:
   - go vet ./...
-  - ./test.sh
+  - go test -timeout 30s github.com/qiwihui/DBShield/dbshield/db -run ^TestInitalMysqlDB$
+  # - ./test.sh
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
