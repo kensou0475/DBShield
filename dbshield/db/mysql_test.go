@@ -1,6 +1,7 @@
 package db_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,66 +12,55 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+var mysql = db.MySQL{}
+var c1 sql.QueryContext = sql.QueryContext{
+	Query:    []byte("select * from test;"),
+	Database: []byte("test"),
+	User:     []byte("test"),
+	Client:   []byte("127.0.0.1"),
+	Time:     time.Now(),
+}
 var dbDsn string = "root:password@tcp(localhost:3306)/dbshield?charset=utf8"
 
-func TestInitalMysqlDB(t *testing.T) {
-	mysqlDsn := dbDsn
-	mysql := new(db.MySQL)
-	err := mysql.InitialDB(mysqlDsn, 0, 0)
+func init() {
+	var mysql = db.MySQL{}
+	err := mysql.InitialDB(dbDsn, 0, 0)
 	if err != nil {
-		t.Error("Got error", err)
+		fmt.Println("Got error", err)
 	}
+	pattern := sql.Pattern(c1.Query)
+	mysql.AddPattern(pattern, c1)
 }
 
 func TestCheckQuery(t *testing.T) {
-	var mysql = db.MySQL{}
-	err := mysql.InitialDB(dbDsn, 0, 0)
-	if err != nil {
-		t.Error("Got error", err)
-	}
-
-	c1 := sql.QueryContext{
-		Query:    []byte("select * from test;"),
+	// test exists
+	cExist := sql.QueryContext{
+		Query:    []byte("select * from testExist;"),
 		Database: []byte("test"),
 		User:     []byte("test"),
 		Client:   []byte("127.0.0.1"),
 		Time:     time.Now(),
 	}
-	c2 := sql.QueryContext{
-		Query:    []byte("select * from user;"),
-		Database: []byte("test"),
-		User:     []byte("test"),
-		Client:   []byte("127.0.0.1"),
-		Time:     time.Now(),
-	}
-	pattern := sql.Pattern(c1.Query)
-	mysql.AddPattern(pattern, c1)
-	if !mysql.CheckQuery(c1, true, true) {
+	pattern := sql.Pattern(cExist.Query)
+	mysql.AddPattern(pattern, cExist)
+	if !mysql.CheckQuery(cExist, true, true) {
 		t.Error("Expected false")
 	}
-	if mysql.CheckQuery(c2, true, true) {
+
+	// test not exists
+	cNotExist := sql.QueryContext{
+		Query:    []byte("select * from testNotExist;"),
+		Database: []byte("test"),
+		User:     []byte("test"),
+		Client:   []byte("127.0.0.1"),
+		Time:     time.Now(),
+	}
+	if mysql.CheckQuery(cNotExist, true, true) {
 		t.Error("Expected true")
 	}
-
 }
 
 func BenchmarkCheckQuery(b *testing.B) {
-	var mysql = db.MySQL{}
-	err := mysql.InitialDB(dbDsn, 0, 0)
-	if err != nil {
-		b.Error("Got error", err)
-	}
-
-	c1 := sql.QueryContext{
-		Query:    []byte("select * from test;"),
-		Database: []byte("test"),
-		User:     []byte("test"),
-		Client:   []byte("127.0.0.1"),
-		Time:     time.Now(),
-	}
-	pattern := sql.Pattern(c1.Query)
-	mysql.AddPattern(pattern, c1)
-
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

@@ -22,7 +22,7 @@ before_install:
 
 script:
   - go vet ./...
-  - go test -timeout 30s github.com/qiwihui/DBShield/dbshield/db -run ^TestInitalMysqlDB$
+  - go test -bench=. github.com/qiwihui/DBShield/dbshield/db -v
   # - ./test.sh
 
 after_success:
