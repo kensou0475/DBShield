@@ -22,8 +22,8 @@ before_install:
 
 script:
   - go vet ./...
-  - go test -bench=. github.com/qiwihui/DBShield/dbshield/db -v
-  # - ./test.sh
+  #- go test -bench=. github.com/qiwihui/DBShield/dbshield/db -v
+  - ./test.sh
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
