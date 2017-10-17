@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	dbCon *bolt.DB
+	DBCon *bolt.DB
 )
 
 //BoltDB local db
@@ -26,7 +26,7 @@ type BoltDB struct {
 // RecordQueryAction record query and action
 func (m *BoltDB) RecordQueryAction(context sql.QueryContext, action string) error {
 	logger.Debugf("action: %s", action)
-	// dbCon.Update(func(tx *bolt.Tx) error {
+	// DBCon.Update(func(tx *bolt.Tx) error {
 	// 	b := tx.Bucket([]byte("abnormal"))
 	// 	if b == nil {
 	// 		panic("Invalid DB")
@@ -40,7 +40,7 @@ func (m *BoltDB) RecordQueryAction(context sql.QueryContext, action string) erro
 func (m *BoltDB) RecordAbnormal(context sql.QueryContext) error {
 	// pattern := sql.Pattern(context.Query)
 	atomic.AddUint64(&AbnormalCounter, 1)
-	return dbCon.Update(func(tx *bolt.Tx) error {
+	return DBCon.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("abnormal"))
 		if b == nil {
 			panic("Invalid DB")
@@ -54,7 +54,7 @@ func (m *BoltDB) RecordAbnormal(context sql.QueryContext) error {
 
 //UpdateState update
 func (m *BoltDB) UpdateState() error {
-	dbCon.Update(func(tx *bolt.Tx) error {
+	DBCon.Update(func(tx *bolt.Tx) error {
 		//Supplied value must remain valid for the life of the transaction
 		qCount := make([]byte, 8)
 		abCount := make([]byte, 8)
@@ -73,8 +73,8 @@ func (m *BoltDB) UpdateState() error {
 
 // SyncAndClose local databases
 func (m *BoltDB) SyncAndClose() error {
-	dbCon.Sync()
-	dbCon.Close()
+	DBCon.Sync()
+	DBCon.Close()
 	return nil
 }
 
@@ -90,7 +90,7 @@ func (m *BoltDB) PutPattern(pattern []byte, query []byte) error {
 
 // DeletePattern delete pattern
 func (m *BoltDB) DeletePattern(pattern []byte) error {
-	return dbCon.Update(func(tx *bolt.Tx) error {
+	return DBCon.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("pattern"))
 		if b != nil {
 			return b.Delete(pattern)
@@ -102,7 +102,7 @@ func (m *BoltDB) DeletePattern(pattern []byte) error {
 // Abnormals list Abnormals
 func (m *BoltDB) Abnormals() (count int) {
 
-	dbCon.View(func(tx *bolt.Tx) error {
+	DBCon.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("abnormal"))
 		if b != nil {
 			return b.ForEach(func(k, v []byte) error {
@@ -124,7 +124,7 @@ func (m *BoltDB) Abnormals() (count int) {
 
 // Patterns list Patterns
 func (m *BoltDB) Patterns() (count int) {
-	dbCon.View(func(tx *bolt.Tx) error {
+	DBCon.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("pattern"))
 		if b != nil {
 			return b.ForEach(func(k, v []byte) error {
@@ -156,7 +156,7 @@ func (m *BoltDB) Purge() error {
 // AddPattern add
 func (m *BoltDB) AddPattern(pattern []byte, context sql.QueryContext) error {
 	atomic.AddUint64(&QueryCounter, 1)
-	if err := dbCon.Update(func(tx *bolt.Tx) error {
+	if err := DBCon.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("pattern"))
 		if b == nil {
 			return errors.New("Invalid DB")
@@ -188,7 +188,7 @@ func (m *BoltDB) AddPattern(pattern []byte, context sql.QueryContext) error {
 func (m *BoltDB) CheckQuery(context sql.QueryContext, checkUser bool, checkSource bool) bool {
 	atomic.AddUint64(&QueryCounter, 1)
 	pattern := sql.Pattern(context.Query)
-	if err := dbCon.View(func(tx *bolt.Tx) error {
+	if err := DBCon.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("pattern"))
 		if b == nil {
 			panic("Invalid DB")
@@ -228,9 +228,9 @@ func (m *BoltDB) CheckQuery(context sql.QueryContext, checkUser bool, checkSourc
 //InitialDB local databases
 func (m *BoltDB) InitialDB(str string, syncInterval time.Duration, timeout time.Duration) error {
 	// logger.Infof("Internal DB: %s", path)
-	if dbCon == nil {
-		dbCon, _ = bolt.Open(str, 0600, nil)
-		dbCon.Update(func(tx *bolt.Tx) error {
+	if DBCon == nil {
+		DBCon, _ = bolt.Open(str, 0600, nil)
+		DBCon.Update(func(tx *bolt.Tx) error {
 			tx.CreateBucketIfNotExists([]byte("pattern"))
 			tx.CreateBucketIfNotExists([]byte("abnormal"))
 			tx.CreateBucketIfNotExists([]byte("query_action"))
@@ -248,11 +248,11 @@ func (m *BoltDB) InitialDB(str string, syncInterval time.Duration, timeout time.
 	}
 
 	if syncInterval != 0 {
-		dbCon.NoSync = true
+		DBCon.NoSync = true
 		ticker := time.NewTicker(syncInterval)
 		go func() {
 			for range ticker.C {
-				dbCon.Sync()
+				DBCon.Sync()
 			}
 		}()
 	}
