@@ -22,7 +22,8 @@ before_install:
 
 script:
   - go vet ./...
-  - go test -race -coverprofile=coverage.txt -covermode=atomic github.com/qiwihui/DBShield/dbshield/db
+  - go test -race -coverprofile=coverage.txt -covermode=atomic -bench . github.com/qiwihui/DBShield/dbshield/db
+  - go test -race -coverprofile=coverage.txt -covermode=atomic -bench . github.com/qiwihui/DBShield/dbshield/training
   #- ./test.sh
 
 after_success:
