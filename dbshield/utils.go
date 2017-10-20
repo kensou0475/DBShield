@@ -92,6 +92,11 @@ func generateDBMS() (utils.DBMS, func(io.Reader) ([]byte, error)) {
 
 func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
 	d, reader := generateDBMS()
+	// delay
+	tcpConn := listenConn.(*net.TCPConn)
+	tcpConn.SetNoDelay(false)
+	listenConn = tcpConn
+
 	logger.Debugf("Connected from: %s", listenConn.RemoteAddr())
 	serverConn, err := net.DialTCP("tcp", nil, serverAddr)
 	if err != nil {
@@ -99,6 +104,7 @@ func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
 		listenConn.Close()
 		return err
 	}
+	serverConn.SetNoDelay(false)
 	if config.Config.Timeout > 0 {
 		if err = listenConn.SetDeadline(time.Now().Add(config.Config.Timeout)); err != nil {
 			return err
