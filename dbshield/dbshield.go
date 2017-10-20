@@ -113,6 +113,7 @@ func Start() (err error) {
 		config.Config.DBType,
 		config.Config.TargetIP,
 		config.Config.TargetPort)
+	logger.Infof("Local backend: %s", config.Config.LocalDbms)
 	logger.Infof("Protect: %v", !config.Config.Learning)
 	logger.Infof("Recording queries: %v", config.Config.LocalQueryRecord)
 	go mainListner()

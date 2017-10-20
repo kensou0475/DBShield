@@ -59,6 +59,17 @@ type State struct {
 	UUID            string `orm:"column(uuid);size(36)"`
 }
 
+//Permission 权限规则
+type Permission struct {
+	ID         int    `orm:"column(id)"`
+	Db         string `orm:"column(db);null;size(128)"`
+	User       string `orm:"column(user);null;size(128)"`
+	Client     string `orm:"column(client);null;size(128)"`
+	Table      string `orm:"column(table);null;size(128)"`
+	Permission string `orm:"column(permission);type(text)"`
+	Enable     bool   `orm:"column(enable)"`
+}
+
 // RecordQueryAction record query and action
 func (m *MySQL) RecordQueryAction(context sql.QueryContext, action string) error {
 	logger.Debugf("action: %s", action)
@@ -357,6 +368,7 @@ func (m *MySQL) InitialDB(str string, syncInterval time.Duration, timeout time.D
 	orm.RegisterModel(new(Pattern))
 	orm.RegisterModel(new(Abnormal))
 	orm.RegisterModel(new(State))
+	orm.RegisterModel(new(Permission))
 
 	// 创建table
 	// Database alias.
