@@ -24,14 +24,15 @@ type MySQL struct {
 
 //QueryAction query and action
 type QueryAction struct {
-	ID     int       `orm:"column(id)"`
-	Query  string    `orm:"column(query);null;type(text)"`
-	User   string    `orm:"column(user);null;size(128)"`
-	Client string    `orm:"column(client);null;size(128)"`
-	Db     string    `orm:"column(db);null;size(128)"`
-	Time   time.Time `orm:"column(time);type(datetime);size(6)"`
-	Action string    `orm:"column(action);size(32)"`
-	UUID   string    `orm:"column(uuid);size(36)"`
+	ID       int       `orm:"column(id)"`
+	Query    string    `orm:"column(query);null;type(text)"`
+	User     string    `orm:"column(user);null;size(128)"`
+	Client   string    `orm:"column(client);null;size(128)"`
+	Db       string    `orm:"column(db);null;size(128)"`
+	Time     time.Time `orm:"column(time);type(datetime);size(6)"`
+	Action   string    `orm:"column(action);size(32)"`
+	Duration int64     `orm:"column(duration)"`
+	UUID     string    `orm:"column(uuid);size(36)"`
 }
 
 //Pattern record trainging set
@@ -68,11 +69,14 @@ type Permission struct {
 	Table      string `orm:"column(table);null;size(128)"`
 	Permission string `orm:"column(permission);type(text)"`
 	Enable     bool   `orm:"column(enable)"`
+	UUID       string `orm:"column(uuid);size(36)"`
 }
 
 // RecordQueryAction record query and action
-func (m *MySQL) RecordQueryAction(context sql.QueryContext, action string) error {
+func (m *MySQL) RecordQueryAction(context sql.QueryContext, action string, elapsed time.Duration) error {
 	logger.Debugf("action: %s", action)
+	// ms
+	elapsedMs := elapsed.Nanoseconds() / 1e6
 
 	// 异步记录
 	go func() {
@@ -84,6 +88,7 @@ func (m *MySQL) RecordQueryAction(context sql.QueryContext, action string) error
 		queryAction.Db = string(context.Database)
 		queryAction.Time = context.Time
 		queryAction.Action = action
+		queryAction.Duration = elapsedMs
 		queryAction.UUID = m.UUID
 		id, err := o.Insert(&queryAction)
 		if err != nil {
@@ -354,7 +359,7 @@ Sample: %s
 
 //InitialDB local databases
 func (m *MySQL) InitialDB(str string, syncInterval time.Duration, timeout time.Duration) error {
-	orm.Debug = false
+	orm.Debug = true
 	//InitLocalDB initail local db
 	orm.RegisterDriver("mysql", orm.DRMySQL)
 
@@ -376,7 +381,7 @@ func (m *MySQL) InitialDB(str string, syncInterval time.Duration, timeout time.D
 	// Drop table and re-create.
 	force := false
 	// Print log.
-	verbose := false
+	verbose := true
 	orm.RunSyncdb(name, force, verbose)
 	return nil
 }

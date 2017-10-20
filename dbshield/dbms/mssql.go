@@ -81,6 +81,8 @@ func (m *MSSQL) Handler() error {
 			return err
 		}
 
+		conAct := new(sql.QueryAction)
+
 		switch buf[0] {
 		case 0x01: //SQL batch
 			query := buf[8:]
@@ -91,9 +93,11 @@ func (m *MSSQL) Handler() error {
 				Client:   remoteAddrToIP(m.client.RemoteAddr()),
 				Time:     time.Now(),
 			}
-			processContext(context)
+			conAct.QueryContext = context
+			action, _ := processContext(context)
+			conAct.Action = action
 		}
-
+		timeStart := time.Now()
 		//Send query/request to server
 		_, err = m.server.Write(buf)
 		if err != nil {
@@ -104,6 +108,10 @@ func (m *MSSQL) Handler() error {
 		if err != nil {
 			return err
 		}
+		elapsed := time.Since(timeStart)
+		conAct.Duration = elapsed
+		logger.Debugf("App elapsed: %s", elapsed)
+		processQueryRecording(*conAct)
 	}
 }
 

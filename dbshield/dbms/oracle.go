@@ -63,6 +63,8 @@ func (o *Oracle) Handler() error {
 		}
 		var eof bool
 
+		conAct := new(sql.QueryAction)
+
 		switch buf[4] { //Packet Type
 		case 0x01: //Connect
 			connectDataLen := int(buf[24])*256 + int(buf[25])
@@ -98,7 +100,9 @@ func (o *Oracle) Handler() error {
 							Client:   remoteAddrToIP(o.client.RemoteAddr()),
 							Time:     time.Now(),
 						}
-						processContext(context)
+						conAct.QueryContext = context
+						action, _ := processContext(context)
+						conAct.Action = action
 					case 0x76: // Reading username
 						val, _ := pascalString(payload[19:])
 						o.username = val
@@ -108,6 +112,7 @@ func (o *Oracle) Handler() error {
 			}
 		}
 
+		timeStart := time.Now()
 		_, err = o.server.Write(buf)
 		if err != nil || eof {
 			return err
@@ -117,6 +122,11 @@ func (o *Oracle) Handler() error {
 		if err != nil {
 			return err
 		}
+
+		elapsed := time.Since(timeStart)
+		conAct.Duration = elapsed
+		logger.Debugf("App elapsed: %s", elapsed)
+		processQueryRecording(*conAct)
 	}
 }
 

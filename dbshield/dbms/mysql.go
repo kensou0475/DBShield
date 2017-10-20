@@ -73,6 +73,8 @@ func (m *MySQL) Handler() error {
 		}
 		data := buf[4:]
 
+		conAct := new(sql.QueryAction)
+
 		switch data[0] {
 		case 0x01: //Quit
 			return nil
@@ -88,13 +90,15 @@ func (m *MySQL) Handler() error {
 				Client:   remoteAddrToIP(m.client.RemoteAddr()),
 				Time:     time.Now(),
 			}
-			processContext(context)
+			conAct.QueryContext = context
+			action, _ := processContext(context)
+			conAct.Action = action
 			// case 0x04: //Show fields
 			// 	logger.Debugf("Show fields: %s", data[1:])
 			// default:
 			// 	logger.Debugf("Unknown Data[0]: %x", data[0])
 		}
-
+		timeStart := time.Now()
 		//Send query/request to server
 		_, err = m.server.Write(buf)
 		if err != nil {
@@ -105,6 +109,10 @@ func (m *MySQL) Handler() error {
 		if err != nil {
 			return err
 		}
+		elapsed := time.Since(timeStart)
+		conAct.Duration = elapsed
+		logger.Debugf("App elapsed: %s", elapsed)
+		processQueryRecording(*conAct)
 	}
 }
 

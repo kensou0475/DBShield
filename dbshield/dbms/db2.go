@@ -72,6 +72,7 @@ func (d *DB2) Handler() (err error) {
 		if err != nil {
 			return
 		}
+		conAct := new(sql.QueryAction)
 		for len(buf) > 0 {
 			dr, n := parseDRDA(buf)
 			buf = buf[n:]
@@ -86,10 +87,12 @@ func (d *DB2) Handler() (err error) {
 					Client:   remoteAddrToIP(d.client.RemoteAddr()),
 					Time:     time.Now(),
 				}
-				processContext(context)
+				conAct.QueryContext = context
+				action, _ := processContext(context)
+				conAct.Action = action
 			}
 		}
-
+		timeStart := time.Now()
 		//Send request to server
 		_, err = d.server.Write(buf)
 		if err != nil {
@@ -104,6 +107,10 @@ func (d *DB2) Handler() (err error) {
 		if err != nil {
 			return
 		}
+		elapsed := time.Since(timeStart)
+		conAct.Duration = elapsed
+		logger.Debugf("Query elapsed: %s", elapsed)
+		processQueryRecording(*conAct)
 	}
 }
 

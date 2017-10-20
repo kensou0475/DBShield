@@ -24,7 +24,7 @@ var (
 //BASE interface should get implemented with every added store database(Boltdb, MySQL, Postgre & etc.) structure
 type BASE interface {
 	InitialDB(string, time.Duration, time.Duration) error
-	RecordQueryAction(sql.QueryContext, string) error
+	RecordQueryAction(sql.QueryContext, string, time.Duration) error
 	Abnormals() int
 	RecordAbnormal(sql.QueryContext) error
 	Patterns() int

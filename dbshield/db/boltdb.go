@@ -15,6 +15,7 @@ import (
 )
 
 var (
+	// DBCon boltdb
 	DBCon *bolt.DB
 )
 
@@ -24,7 +25,7 @@ type BoltDB struct {
 }
 
 // RecordQueryAction record query and action
-func (m *BoltDB) RecordQueryAction(context sql.QueryContext, action string) error {
+func (m *BoltDB) RecordQueryAction(context sql.QueryContext, action string, elapsed time.Duration) error {
 	logger.Debugf("action: %s", action)
 	// DBCon.Update(func(tx *bolt.Tx) error {
 	// 	b := tx.Bucket([]byte("abnormal"))

@@ -73,6 +73,9 @@ func (p *Postgres) Handler() (err error) {
 		if err != nil {
 			return
 		}
+
+		conAct := new(sql.QueryAction)
+
 		switch buf[0] {
 		case 0x51: //Simple query
 			context := sql.QueryContext{
@@ -82,13 +85,16 @@ func (p *Postgres) Handler() (err error) {
 				Client:   remoteAddrToIP(p.client.RemoteAddr()),
 				Time:     time.Now(),
 			}
-			processContext(context)
+			conAct.QueryContext = context
+			action, _ := processContext(context)
+			conAct.Action = action
 
 		case 0x58: //Terminate
 			_, err = p.server.Write(buf)
 			return
 		}
 
+		timeStart := time.Now()
 		//Send request to server
 		_, err = p.server.Write(buf)
 		if err != nil {
@@ -106,6 +112,11 @@ func (p *Postgres) Handler() (err error) {
 		if err != nil {
 			return
 		}
+
+		elapsed := time.Since(timeStart)
+		conAct.Duration = elapsed
+		logger.Debugf("Query elapsed: %s", elapsed)
+		processQueryRecording(*conAct)
 
 		switch buf[0] {
 		case 0x45: //Error

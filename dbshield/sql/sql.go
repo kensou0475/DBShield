@@ -64,6 +64,13 @@ type QueryContext struct {
 	Time     time.Time
 }
 
+// QueryAction action and duration
+type QueryAction struct {
+	QueryContext
+	Action   string
+	Duration time.Duration
+}
+
 //Unmarshal []byte into QueryContext
 func (c *QueryContext) Unmarshal(b []byte) (size uint32) {
 	n := binary.BigEndian.Uint32(b)

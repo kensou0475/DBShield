@@ -3,6 +3,7 @@ package dbms
 import (
 	"crypto/tls"
 	"net"
+	"time"
 
 	"github.com/qiwihui/DBShield/dbshield/config"
 	"github.com/qiwihui/DBShield/dbshield/logger"
@@ -298,32 +299,27 @@ func threeByteBigEndianToInt(data []byte) uint {
 }
 
 //processContext will handle context depending on running mode
-func processContext(context sql.QueryContext) (err error) {
+func processContext(context sql.QueryContext) (action string, err error) {
 	logger.Debugf("Query: %s", context.Query)
 
-	var action string
 	if config.Config.Learning {
 		action = "learning"
-		// record query and action
-		if config.Config.LocalQueryRecord {
-			config.Config.LocalDB.RecordQueryAction(context, action)
-		}
-		return training.AddToTrainingSet(context)
+		return action, training.AddToTrainingSet(context)
 	}
 	if config.Config.ActionFunc != nil && !training.CheckQuery(context) {
 		action = "drop"
-		// record query and action
-		if config.Config.LocalQueryRecord {
-			config.Config.LocalDB.RecordQueryAction(context, action)
-		}
-		return config.Config.ActionFunc()
+		processQueryRecording(sql.QueryAction{QueryContext: context, Action: action, Duration: time.Duration(0) * time.Second})
+		return action, config.Config.ActionFunc()
 	}
 	action = "pass"
-	// record query and action
-	if config.Config.LocalQueryRecord {
-		config.Config.LocalDB.RecordQueryAction(context, action)
-	}
+	return action, nil
+}
 
+func processQueryRecording(qA sql.QueryAction) (err error) {
+	if config.Config.LocalQueryRecord {
+		logger.Debugf("Query recorded: %s", qA.Query)
+		config.Config.LocalDB.RecordQueryAction(qA.QueryContext, qA.Action, qA.Duration)
+	}
 	return nil
 }
 
