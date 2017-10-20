@@ -26,7 +26,7 @@ type BASE interface {
 	InitialDB(string, time.Duration, time.Duration) error
 	RecordQueryAction(sql.QueryContext, string, time.Duration) error
 	Abnormals() int
-	RecordAbnormal(sql.QueryContext) error
+	RecordAbnormal(sql.QueryContext, string) error
 	Patterns() int
 	CheckPattern([]byte) error
 	AddPattern([]byte, sql.QueryContext) error

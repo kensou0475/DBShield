@@ -17,7 +17,7 @@ func CheckQuery(context sql.QueryContext) bool {
 	hasQuery := config.Config.LocalDB.CheckQuery(context, config.Config.CheckUser, config.Config.CheckSource)
 	if !hasQuery {
 		// pattern := sql.Pattern(context.Query)
-		config.Config.LocalDB.RecordAbnormal(context)
+		config.Config.LocalDB.RecordAbnormal(context, "pattern")
 		return false
 	}
 	return true

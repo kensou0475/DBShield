@@ -47,8 +47,16 @@ type Pattern struct {
 type Abnormal struct {
 	ID int `orm:"column(id)"`
 	// Key   string `orm:"column(key);type(text)"`
-	Value string `orm:"column(value);type(text)"`
-	UUID  string `orm:"column(uuid);size(36)"`
+	Value         string    `orm:"column(value);type(text)"`
+	Query         string    `orm:"column(query);null;type(text)"`
+	ClientIP      string    `orm:"column(client_ip);null;size(39)"`
+	ClientProgram string    `orm:"column(client_pm);null;size(128)"`
+	Time          time.Time `orm:"column(time);type(datetime);size(6)"`
+	UUID          string    `orm:"column(uuid);size(36)"`
+	// Type: pattern or permission
+	Type string `orm:"column(type);size(36)"`
+	// Result: none, alarm, alarm_block
+	Result string `orm:"column(result);size(36)"`
 }
 
 //State record abnormal set
@@ -101,13 +109,17 @@ func (m *MySQL) RecordQueryAction(context sql.QueryContext, action string, elaps
 }
 
 // RecordAbnormal record abnormal query
-func (m *MySQL) RecordAbnormal(context sql.QueryContext) error {
+func (m *MySQL) RecordAbnormal(context sql.QueryContext, abType string) error {
 	atomic.AddUint64(&AbnormalCounter, 1)
 	go func() {
 		o := orm.NewOrm()
 		var abnormal Abnormal
 		var sx16 = formatPattern(context.Marshal())
+		abnormal.Query = string(context.Query)
+		abnormal.Time = context.Time
 		abnormal.Value = sx16
+		abnormal.Type = abType
+		abnormal.Result = "none"
 		abnormal.UUID = m.UUID
 		id, err := o.Insert(&abnormal)
 		if err == nil {

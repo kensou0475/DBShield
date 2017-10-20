@@ -38,7 +38,7 @@ func (m *BoltDB) RecordQueryAction(context sql.QueryContext, action string, elap
 }
 
 // RecordAbnormal record abnormal query
-func (m *BoltDB) RecordAbnormal(context sql.QueryContext) error {
+func (m *BoltDB) RecordAbnormal(context sql.QueryContext, abType string) error {
 	// pattern := sql.Pattern(context.Query)
 	atomic.AddUint64(&AbnormalCounter, 1)
 	return DBCon.Update(func(tx *bolt.Tx) error {
