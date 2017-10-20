@@ -371,7 +371,7 @@ Sample: %s
 
 //InitialDB local databases
 func (m *MySQL) InitialDB(str string, syncInterval time.Duration, timeout time.Duration) error {
-	orm.Debug = true
+	orm.Debug = false
 	//InitLocalDB initail local db
 	orm.RegisterDriver("mysql", orm.DRMySQL)
 
@@ -393,7 +393,7 @@ func (m *MySQL) InitialDB(str string, syncInterval time.Duration, timeout time.D
 	// Drop table and re-create.
 	force := false
 	// Print log.
-	verbose := true
+	verbose := false
 	orm.RunSyncdb(name, force, verbose)
 	return nil
 }

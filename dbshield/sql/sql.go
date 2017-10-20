@@ -153,3 +153,13 @@ func Pattern(query []byte) []byte {
 		}
 	}
 }
+
+// GetTableName from sql statement
+func GetTableName(query string) (string, error) {
+	tree, err := sqlparser.Parse(query)
+	if err != nil {
+		return "", err
+	}
+	out := sqlparser.GetTableName(tree.(*sqlparser.Select).From[0].(*sqlparser.AliasedTableExpr).Expr)
+	return out.String(), nil
+}

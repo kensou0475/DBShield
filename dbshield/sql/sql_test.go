@@ -63,6 +63,35 @@ func TestClassify(t *testing.T) {
 	}
 }
 
+func TestGetTableName(t *testing.T) {
+	testcases := []struct {
+		in, out string
+	}{{
+		in:  "select * from t",
+		out: "t",
+	}, {
+		in:  "select * from t.t",
+		out: "",
+	}, {
+		in:  "select * from (select * from t) as tt",
+		out: "",
+	}, {
+		in:  "insert into t (num) values (1)",
+		out: "",
+	}}
+
+	for _, tc := range testcases {
+		out, err := sql.GetTableName(tc.in)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		if out != tc.out {
+			t.Errorf("GetTableName('%s'): %s, want %s", tc.in, out, tc.out)
+		}
+	}
+}
+
 func TestQueryContext(t *testing.T) {
 	c := sql.QueryContext{
 		Query:    []byte("select * from test;"),
