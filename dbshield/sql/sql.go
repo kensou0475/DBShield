@@ -3,11 +3,57 @@ package sql
 import (
 	"bytes"
 	"encoding/binary"
+	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/xwb1989/sqlparser"
 )
+
+//Query
+const (
+	TypeDDL = iota
+	TypeDML
+	TypeDCL
+	TypeTCL
+	TypeUnknown
+)
+
+//Classify sql commmands
+func Classify(sql string) int {
+	// DDL包括：CREATE，ALTER，DROP，TRUNCATE，COMMENT，RENAME；
+	// DML包括：SELECT，INSERT，UPDATE，DELETE，MERGE，CALL，EXPLAIN PLAN，LOCK TABLE；
+	// DCL包括：GRANT，REVOKE
+	// TCL包括：COMMIT，ROLLBACK，SAVEPOINT，SET TRANSACTION
+
+	trimmed := sqlparser.StripLeadingComments(sql)
+
+	firstWord := trimmed
+	if end := strings.IndexFunc(trimmed, unicode.IsSpace); end != -1 {
+		firstWord = trimmed[:end]
+	}
+
+	// Comparison is done in order of priority.
+	loweredFirstWord := strings.ToLower(firstWord)
+	switch loweredFirstWord {
+	case "select", "insert", "update", "delete", "replace", "merge", "call":
+		return TypeDML
+	case "commit", "rollback", "SAVEPOINT":
+		return TypeTCL
+	case "create", "alter", "drop", "truncate", "comment", "rename":
+		return TypeDDL
+	case "grant", "revoke":
+		return TypeDCL
+	}
+	switch strings.ToLower(trimmed) {
+	case "explain plan", "lock table":
+		return TypeDML
+	case "set transaction":
+		return TypeTCL
+	}
+	return TypeUnknown
+}
 
 //QueryContext holds information around query
 type QueryContext struct {

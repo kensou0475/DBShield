@@ -5,8 +5,63 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nim4/DBShield/dbshield/sql"
+	"github.com/qiwihui/DBShield/dbshield/sql"
 )
+
+func TestClassify(t *testing.T) {
+	testcases := []struct {
+		sql  string
+		want int
+	}{
+		{"select ...", sql.TypeDML},
+		{"    select ...", sql.TypeDML},
+		{"insert ...", sql.TypeDML},
+		{"replace ....", sql.TypeDML},
+		{"   update ...", sql.TypeDML},
+		{"Update", sql.TypeDML},
+		{"UPDATE ...", sql.TypeDML},
+		{"\n\t    delete ...", sql.TypeDML},
+		{"", sql.TypeUnknown},
+		{" ", sql.TypeUnknown},
+		{"begin", sql.TypeUnknown},
+		{" begin", sql.TypeUnknown},
+		{" begin ", sql.TypeUnknown},
+		{"\n\t begin ", sql.TypeUnknown},
+		{"... begin ", sql.TypeUnknown},
+		{"begin ...", sql.TypeUnknown},
+		{"start transaction", sql.TypeUnknown},
+		{"commit", sql.TypeTCL},
+		{"rollback", sql.TypeTCL},
+		{"create", sql.TypeDDL},
+		{"alter", sql.TypeDDL},
+		{"rename", sql.TypeDDL},
+		{"drop", sql.TypeDDL},
+		{"set", sql.TypeUnknown},
+		{"show", sql.TypeUnknown},
+		{"use", sql.TypeUnknown},
+		{"analyze", sql.TypeUnknown},
+		{"describe", sql.TypeUnknown},
+		{"desc", sql.TypeUnknown},
+		{"explain", sql.TypeUnknown},
+		{"repair", sql.TypeUnknown},
+		{"optimize", sql.TypeUnknown},
+		{"truncate", sql.TypeDDL},
+		{"unknown", sql.TypeUnknown},
+
+		{"/* leading comment */ select ...", sql.TypeDML},
+		{"/* leading comment */ /* leading comment 2 */ select ...", sql.TypeDML},
+		{"-- leading single line comment \n select ...", sql.TypeDML},
+		{"-- leading single line comment \n -- leading single line comment 2\n select ...", sql.TypeDML},
+
+		{"/* leading comment no end select ...", sql.TypeUnknown},
+		{"-- leading single line comment no end select ...", sql.TypeUnknown},
+	}
+	for _, tcase := range testcases {
+		if got := sql.Classify(tcase.sql); got != tcase.want {
+			t.Errorf("Preview(%s): %v, want %v", tcase.sql, got, tcase.want)
+		}
+	}
+}
 
 func TestQueryContext(t *testing.T) {
 	c := sql.QueryContext{
