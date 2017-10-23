@@ -3,6 +3,7 @@ package sql
 import (
 	"bytes"
 	"encoding/binary"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -162,4 +163,26 @@ func GetTableName(query string) (string, error) {
 	}
 	out := sqlparser.GetTableName(tree.(*sqlparser.Select).From[0].(*sqlparser.AliasedTableExpr).Expr)
 	return out.String(), nil
+}
+
+// ExtractTableNames from sql statement
+func ExtractTableNames(fromSQL string) (rets []string, err error) {
+	rets = []string{}
+	reg := "(?i)((update|\\s+(from|into))\\s+(?P<table1>\\w+)(\\s+(as\\s+)?(?P<alias_name>\\w+))?(\\s+(where|left|join|inner))?)|(\\s+join\\s+(?P<table2>\\w+)\\s+((as\\s+)?(\\w+)\\s+)?on)"
+	r, err := regexp.Compile(reg)
+	if err != nil {
+		return []string{}, err
+	}
+	n1 := r.SubexpNames()
+	finds := r.FindAllStringSubmatch(fromSQL, -1)
+	for _, v := range finds {
+		for ii, vv := range v {
+			if (n1[ii] == "table1" || n1[ii] == "table2") && vv != "" {
+				// fmt.Println("=>", n1[ii], vv)
+				rets = append(rets, string(vv))
+			}
+
+		}
+	}
+	return
 }

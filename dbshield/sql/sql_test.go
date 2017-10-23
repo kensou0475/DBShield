@@ -2,6 +2,7 @@ package sql_test
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
 	"time"
 
@@ -129,6 +130,68 @@ func TestPattern(t *testing.T) {
 	p := sql.Pattern([]byte("select * from X;"))
 	if len(p) < 4 {
 		t.Error("Unexpected Pattern")
+	}
+}
+
+func TestExtractTableNames(t *testing.T) {
+	testcases := []struct {
+		in  string
+		out []string
+	}{
+		{
+			in:  "select * from test",
+			out: []string{"test"},
+		},
+		{
+			in:  "SELECT * FROM test",
+			out: []string{"test"},
+		},
+		{
+			in:  "select * from test as t where id=3;",
+			out: []string{"test"},
+		},
+		{
+			in:  "delete * from test",
+			out: []string{"test"},
+		},
+		{
+			in:  "select * from (select * from test) as tt",
+			out: []string{"test"},
+		},
+		{
+			in:  "insert into test (num) values (1)",
+			out: []string{"test"},
+		},
+		{
+			in:  "update test set name='test' where id=1",
+			out: []string{"test"},
+		},
+		{
+			in:  "UPDATE test SET name='test' WHERE id=1",
+			out: []string{"test"},
+		},
+		{
+			in: `select * from table1 l
+				left join table2 p on l.patid=p.patientid
+				join table3 c on   l.patid=c.patid inner join table4 ph on l.patid=ph.patid
+			 	from table5 p where p.outvisitid=l.outvisitid) unit all;`,
+			out: []string{"table1", "table2", "table3", "table4", "table5"},
+		},
+		{
+			in:  "select count(*) as count from table1 as a left join table2 as b on a.user_id = b.user_id where a.title like '%Cloth%'",
+			out: []string{"table1", "table2"},
+		},
+	}
+
+	for _, tc := range testcases {
+		out, err := sql.ExtractTableNames(tc.in)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		if !reflect.DeepEqual(out, tc.out) {
+			t.Errorf("ExtractTableNames('%s'): %s, want %s", tc.in, out, tc.out)
+		}
 	}
 }
 
