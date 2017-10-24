@@ -95,6 +95,7 @@ func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
 	// delay
 	tcpConn := listenConn.(*net.TCPConn)
 	tcpConn.SetNoDelay(false)
+	// tcpConn.SetKeepAlive(true)
 	listenConn = tcpConn
 
 	logger.Debugf("Connected from: %s", listenConn.RemoteAddr())
@@ -105,6 +106,7 @@ func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
 		return err
 	}
 	serverConn.SetNoDelay(false)
+	// serverConn.SetKeepAlive(true)
 	if config.Config.Timeout > 0 {
 		if err = listenConn.SetDeadline(time.Now().Add(config.Config.Timeout)); err != nil {
 			return err

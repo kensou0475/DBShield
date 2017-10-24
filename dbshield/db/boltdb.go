@@ -226,6 +226,15 @@ func (m *BoltDB) CheckQuery(context sql.QueryContext, checkUser bool, checkSourc
 	return true
 }
 
+//CheckPermission check if has permission
+func (m *BoltDB) CheckPermission(sql.QueryContext, bool, bool) bool {
+	// get statement type
+
+	// verify permission
+
+	return true
+}
+
 //InitialDB local databases
 func (m *BoltDB) InitialDB(str string, syncInterval time.Duration, timeout time.Duration) error {
 	// logger.Infof("Internal DB: %s", path)

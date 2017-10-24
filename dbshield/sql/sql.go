@@ -246,7 +246,7 @@ func Pattern(query []byte) []byte {
 	}
 }
 
-// GetTableName from sql statement
+// GetTableName from sql select statement
 func GetTableName(query string) (string, error) {
 	tree, err := sqlparser.Parse(query)
 	if err != nil {

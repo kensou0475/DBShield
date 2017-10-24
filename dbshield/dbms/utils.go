@@ -306,7 +306,7 @@ func processContext(context sql.QueryContext) (action string, err error) {
 		action = "learning"
 		return action, training.AddToTrainingSet(context)
 	}
-	if config.Config.ActionFunc != nil && !training.CheckQuery(context) {
+	if config.Config.ActionFunc != nil && !training.CheckQuery(context) && !training.CheckPermission(context) {
 		action = "drop"
 		processQueryRecording(sql.QueryAction{QueryContext: context, Action: action, Duration: time.Duration(0) * time.Second})
 		return action, config.Config.ActionFunc()

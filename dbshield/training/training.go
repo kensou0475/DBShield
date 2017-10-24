@@ -22,3 +22,14 @@ func CheckQuery(context sql.QueryContext) bool {
 	}
 	return true
 }
+
+// CheckPermission if has statement permission
+func CheckPermission(context sql.QueryContext) bool {
+	hasPermission := config.Config.LocalDB.CheckPermission(context, true, true)
+	if !hasPermission {
+		// pattern := sql.Pattern(context.Query)
+		config.Config.LocalDB.RecordAbnormal(context, "permission")
+		return false
+	}
+	return true
+}

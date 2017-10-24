@@ -22,41 +22,47 @@ type MySQL struct {
 	UUID string
 }
 
-//QueryAction query and action
+//QueryAction 记录所有操作
 type QueryAction struct {
-	ID       int       `orm:"column(id)"`
-	Query    string    `orm:"column(query);null;type(text)"`
-	User     string    `orm:"column(user);null;size(128)"`
-	Client   string    `orm:"column(client);null;size(128)"`
-	Db       string    `orm:"column(db);null;size(128)"`
-	Time     time.Time `orm:"column(time);type(datetime);size(6)"`
-	Action   string    `orm:"column(action);size(32)"`
-	Duration int64     `orm:"column(duration)"`
-	UUID     string    `orm:"column(uuid);size(36)"`
+	ID int `orm:"column(id)"`
+	// 实际查询语句
+	Query string `orm:"column(query);null;type(text)"`
+	// 查询用户
+	User string `orm:"column(user);null;size(128)"`
+	// 查询客户端信息
+	ClientIP      string `orm:"column(client_ip);null;size(39)"`
+	ClientProgram string `orm:"column(client_pm);null;size(128)"`
+	// 执行的数据库和表
+	Database string `orm:"column(db);null;size(128)"`
+	Tables   string `orm:"column(tables);null;type(text)"`
+	// 执行时间和执行耗时(ms)
+	Time     time.Time `orm:"column(time);auto_now_add;type(datetime);size(6)"`
+	Duration int64     `orm:"column(duration);default(0)"`
+	// 执行结果
+	QueryResult bool `orm:"column(query_result);default(true)"`
+	// 是否违规操作
+	IsAbnormal bool `orm:"column(is_abnormal);default(false)"`
+	// 违规操作类型：none, pattern, permission
+	AbnormalType string `orm:"column(abnormal_type);size(32);default(none)"`
+	// 处理结果：none, learning, pass, drop
+	Action string `orm:"column(action);size(36);defult(pass)"`
+	// 告警
+	IsAlarm bool   `orm:"column(is_alarm);default(false)"`
+	UUID    string `orm:"column(uuid);size(36)"`
 }
 
 //Pattern record trainging set
 type Pattern struct {
-	ID    int    `orm:"column(id)"`
-	Key   string `orm:"column(key);null;type(text)"`
-	Value string `orm:"column(value);null;type(text)"`
-	UUID  string `orm:"column(uuid);size(36)"`
-}
-
-//Abnormal record abnormal set
-type Abnormal struct {
 	ID int `orm:"column(id)"`
-	// Key   string `orm:"column(key);type(text)"`
-	Value         string    `orm:"column(value);type(text)"`
-	Query         string    `orm:"column(query);null;type(text)"`
-	ClientIP      string    `orm:"column(client_ip);null;size(39)"`
-	ClientProgram string    `orm:"column(client_pm);null;size(128)"`
-	Time          time.Time `orm:"column(time);type(datetime);size(6)"`
-	UUID          string    `orm:"column(uuid);size(36)"`
-	// Type: pattern or permission
-	Type string `orm:"column(type);size(36)"`
-	// Result: none, alarm, alarm_block
-	Result string `orm:"column(result);size(36)"`
+	// pattent_key
+	Key string `orm:"column(key);null;type(text)"`
+	//value
+	Value string `orm:"column(value);null;type(text)"`
+	// Example Value
+	ExampleValue string `orm:"column(example_value);null;type(text)"`
+	// 启用状态, true, false
+	Enable bool   `orm:"column(enable)"`
+	UUID   string `orm:"column(uuid);size(36)"`
 }
 
 //State record abnormal set
@@ -70,14 +76,20 @@ type State struct {
 
 //Permission 权限规则
 type Permission struct {
-	ID         int    `orm:"column(id)"`
-	Db         string `orm:"column(db);null;size(128)"`
-	User       string `orm:"column(user);null;size(128)"`
-	Client     string `orm:"column(client);null;size(128)"`
-	Table      string `orm:"column(table);null;size(128)"`
+	ID int `orm:"column(id)"`
+	// 数据库
+	Db string `orm:"column(db);null;size(128)"`
+	// 用户
+	User string `orm:"column(user);null;size(128)"`
+	// 客户端
+	Client string `orm:"column(client);null;size(128)"`
+	// 表, "*" 表示全部
+	Table string `orm:"column(table);null;size(128)"`
+	// 权限, SELECT,UPDATE,DELETE,INSERT,GRANT....
 	Permission string `orm:"column(permission);type(text)"`
-	Enable     bool   `orm:"column(enable)"`
-	UUID       string `orm:"column(uuid);size(36)"`
+	// 启用状态, true, false
+	Enable bool   `orm:"column(enable)"`
+	UUID   string `orm:"column(uuid);size(36)"`
 }
 
 // RecordQueryAction record query and action
@@ -92,8 +104,10 @@ func (m *MySQL) RecordQueryAction(context sql.QueryContext, action string, elaps
 		var queryAction QueryAction
 		queryAction.Query = string(context.Query)
 		queryAction.User = string(context.User)
-		queryAction.Client = fourByteBigEndianToIP(context.Client)
-		queryAction.Db = string(context.Database)
+		queryAction.ClientIP = fourByteBigEndianToIP(context.Client)
+		// queryAction.ClientProgram = ""
+		queryAction.Database = string(context.Database)
+		// queryAction.Tables = ""
 		queryAction.Time = context.Time
 		queryAction.Action = action
 		queryAction.Duration = elapsedMs
@@ -113,13 +127,23 @@ func (m *MySQL) RecordAbnormal(context sql.QueryContext, abType string) error {
 	atomic.AddUint64(&AbnormalCounter, 1)
 	go func() {
 		o := orm.NewOrm()
-		var abnormal Abnormal
-		var sx16 = formatPattern(context.Marshal())
+		var abnormal QueryAction
+		// var sx16 = formatPattern(context.Marshal())
 		abnormal.Query = string(context.Query)
+		abnormal.User = string(context.User)
+		abnormal.ClientIP = fourByteBigEndianToIP(context.Client)
+		// queryAction.ClientProgram = ""
+		abnormal.Database = string(context.Database)
+		// queryAction.Tables = ""
 		abnormal.Time = context.Time
-		abnormal.Value = sx16
-		abnormal.Type = abType
-		abnormal.Result = "none"
+		abnormal.Duration = 0
+		// queryAction.Tables = ""
+		// abnormal.Value = sx16
+		// abnormal.QueryResult = false
+		abnormal.IsAbnormal = true
+		abnormal.AbnormalType = abType
+		abnormal.IsAlarm = false
+		abnormal.Action = "drop"
 		abnormal.UUID = m.UUID
 		id, err := o.Insert(&abnormal)
 		if err == nil {
@@ -131,7 +155,7 @@ func (m *MySQL) RecordAbnormal(context sql.QueryContext, abType string) error {
 	return nil
 }
 
-// CheckPattern check if pattern exist
+// CheckPattern check if pattern exists
 func (m *MySQL) CheckPattern(pattern []byte) error {
 
 	return errors.New("Not Impletement")
@@ -282,6 +306,15 @@ func (m *MySQL) CheckQuery(context sql.QueryContext, checkUser bool, checkSource
 	return true
 }
 
+//CheckPermission check if has permission
+func (m *MySQL) CheckPermission(sql.QueryContext, bool, bool) bool {
+	// get statement type
+
+	// verify permission
+
+	return true
+}
+
 //UpdateState update
 func (m *MySQL) UpdateState() error {
 	o := orm.NewOrm()
@@ -321,19 +354,19 @@ func (m *MySQL) UpdateState() error {
 
 // Abnormals list abnormals
 func (m *MySQL) Abnormals() (count int) {
-	var abnormals []*Abnormal
+	var abnormals []*QueryAction
 	o := orm.NewOrm()
 	_, err := o.QueryTable("abnormal").Filter("uuid", m.UUID).All(&abnormals)
 	if err == nil && len(abnormals) > 0 {
 		logger.Debug("range abnormal")
 		for _, element := range abnormals {
-			var c sql.QueryContext
-			c.Unmarshal(unformatPattern(element.Value))
+			// var c sql.QueryContext
+			// c.Unmarshal(unformatPattern(element.Value))
 			fmt.Printf("[%s] [User: %s] [Database: %s] %s\n",
-				c.Time.Format(time.RFC1123),
-				c.User,
-				c.Database,
-				c.Query)
+				element.Time.Format(time.RFC1123),
+				element.User,
+				element.Database,
+				element.Query)
 			count++
 		}
 	} else {
@@ -383,7 +416,7 @@ func (m *MySQL) InitialDB(str string, syncInterval time.Duration, timeout time.D
 	// 注册定义的model
 	orm.RegisterModel(new(QueryAction))
 	orm.RegisterModel(new(Pattern))
-	orm.RegisterModel(new(Abnormal))
+	// orm.RegisterModel(new(Abnormal))
 	orm.RegisterModel(new(State))
 	orm.RegisterModel(new(Permission))
 

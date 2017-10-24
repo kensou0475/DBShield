@@ -34,6 +34,7 @@ type BASE interface {
 	DeletePattern([]byte) error
 	Purge() error
 	CheckQuery(sql.QueryContext, bool, bool) bool
+	CheckPermission(sql.QueryContext, bool, bool) bool
 	UpdateState() error
 	SyncAndClose() error
 }
@@ -44,7 +45,7 @@ func GenerateLocalDB(dbName string, dbID string) BASE {
 	case "mysql":
 		return &MySQL{name: dbName, UUID: dbID}
 	case "boltdb":
-		return new(BoltDB)
+		return &BoltDB{name: dbName}
 	default:
 		return nil
 	}
