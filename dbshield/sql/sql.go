@@ -21,13 +21,44 @@ const (
 	TypeUnknown
 )
 
-//Classify sql commmands
-func Classify(sql string) int {
+//Statement
+const (
+	StmtSelect = iota
+	StmtInsert
+	StmtReplace
+	StmtMerge
+	StmtCall
+	StmtUpdate
+	StmtDelete
+	StmtDDL
+	StmtBegin
+	StmtCommit
+	StmtRollback
+	StmtSavePoint
+	StmtSet
+	StmtShow
+	StmtUse
+	StmtCreate
+	StmtAlert
+	StmtDrop
+	StmtTruncate
+	StmtComment
+	StmtRename
+	StmtGrant
+	StmtRevoke
+	TypeExplainPlan
+	TypeLockTable
+	TypeSetTransaction
+	StmtOther
+	StmtUnknown
+)
+
+//Classify 分类sql语句
+func Classify(sql string) string {
 	// DDL包括：CREATE，ALTER，DROP，TRUNCATE，COMMENT，RENAME；
 	// DML包括：SELECT，INSERT，UPDATE，DELETE，MERGE，CALL，EXPLAIN PLAN，LOCK TABLE；
 	// DCL包括：GRANT，REVOKE
 	// TCL包括：COMMIT，ROLLBACK，SAVEPOINT，SET TRANSACTION
-
 	trimmed := sqlparser.StripLeadingComments(sql)
 
 	firstWord := trimmed
@@ -39,19 +70,79 @@ func Classify(sql string) int {
 	loweredFirstWord := strings.ToLower(firstWord)
 	switch loweredFirstWord {
 	case "select", "insert", "update", "delete", "replace", "merge", "call":
-		return TypeDML
-	case "commit", "rollback", "SAVEPOINT":
-		return TypeTCL
+		return "DML"
+	case "commit", "rollback", "savepoint":
+		return "TCL"
 	case "create", "alter", "drop", "truncate", "comment", "rename":
-		return TypeDDL
+		return "DDL"
 	case "grant", "revoke":
-		return TypeDCL
+		return "DCL"
 	}
 	switch strings.ToLower(trimmed) {
 	case "explain plan", "lock table":
-		return TypeDML
+		return "DML"
 	case "set transaction":
-		return TypeTCL
+		return "TCL"
+	}
+	return "Unknown"
+}
+
+//GetType 获取sql语句类型
+func GetType(sql string) int {
+	trimmed := sqlparser.StripLeadingComments(sql)
+
+	firstWord := trimmed
+	if end := strings.IndexFunc(trimmed, unicode.IsSpace); end != -1 {
+		firstWord = trimmed[:end]
+	}
+
+	// Comparison is done in order of priority.
+	loweredFirstWord := strings.ToLower(firstWord)
+	switch loweredFirstWord {
+	case "select":
+		return StmtSelect
+	case "insert":
+		return StmtInsert
+	case "replace":
+		return StmtReplace
+	case "merge":
+		return StmtMerge
+	case "call":
+		return StmtCall
+	case "update":
+		return StmtUpdate
+	case "delete":
+		return StmtDelete
+	case "commit":
+		return StmtCommit
+	case "rollback":
+		return StmtRollback
+	case "savepoint":
+		return StmtSavePoint
+	case "create":
+		return StmtCreate
+	case "alert":
+		return StmtAlert
+	case "drop":
+		return StmtDrop
+	case "truncate":
+		return StmtTruncate
+	case "comment":
+		return StmtComment
+	case "rename":
+		return StmtRename
+	case "grant":
+		return StmtGrant
+	case "revoke":
+		return StmtRevoke
+	}
+	switch strings.ToLower(trimmed) {
+	case "explain plan":
+		return TypeExplainPlan
+	case "lock table":
+		return TypeLockTable
+	case "set transaction":
+		return TypeSetTransaction
 	}
 	return TypeUnknown
 }
@@ -168,6 +259,7 @@ func GetTableName(query string) (string, error) {
 // ExtractTableNames from sql statement
 func ExtractTableNames(fromSQL string) (rets []string, err error) {
 	rets = []string{}
+	// TODO 增加对
 	reg := "(?i)((update|\\s+(from|into))\\s+(?P<table1>\\w+)(\\s+(as\\s+)?(?P<alias_name>\\w+))?(\\s+(where|left|join|inner))?)|(\\s+join\\s+(?P<table2>\\w+)\\s+((as\\s+)?(\\w+)\\s+)?on)"
 	r, err := regexp.Compile(reg)
 	if err != nil {
