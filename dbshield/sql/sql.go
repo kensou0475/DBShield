@@ -14,11 +14,11 @@ import (
 
 //Query
 const (
-	TypeDDL = iota
-	TypeDML
-	TypeDCL
-	TypeTCL
-	TypeUnknown
+	TypeDDL     = "DDL"
+	TypeDML     = "DML"
+	TypeDCL     = "DCL"
+	TypeTCL     = "TCL"
+	TypeUnknown = "Unknown"
 )
 
 //Statement
@@ -46,9 +46,9 @@ const (
 	StmtRename
 	StmtGrant
 	StmtRevoke
-	TypeExplainPlan
-	TypeLockTable
-	TypeSetTransaction
+	StmtExplainPlan
+	StmtLockTable
+	StmtSetTransaction
 	StmtOther
 	StmtUnknown
 )
@@ -138,13 +138,13 @@ func GetType(sql string) int {
 	}
 	switch strings.ToLower(trimmed) {
 	case "explain plan":
-		return TypeExplainPlan
+		return StmtExplainPlan
 	case "lock table":
-		return TypeLockTable
+		return StmtLockTable
 	case "set transaction":
-		return TypeSetTransaction
+		return StmtSetTransaction
 	}
-	return TypeUnknown
+	return StmtUnknown
 }
 
 //QueryContext holds information around query
@@ -259,8 +259,8 @@ func GetTableName(query string) (string, error) {
 // ExtractTableNames from sql statement
 func ExtractTableNames(fromSQL string) (rets []string, err error) {
 	rets = []string{}
-	// TODO 增加对
-	reg := "(?i)((update|\\s+(from|into))\\s+(?P<table1>\\w+)(\\s+(as\\s+)?(?P<alias_name>\\w+))?(\\s+(where|left|join|inner))?)|(\\s+join\\s+(?P<table2>\\w+)\\s+((as\\s+)?(\\w+)\\s+)?on)"
+	// TODO 增加对sql union时候的检测
+	reg := "(?i)((alter|drop|create)\\s+table\\s+(?P<table0>\\w+)(\\s+(as\\s+)?(?P<alias0>\\w+))?)|((update|\\s+(from|into))\\s+(?P<table1>\\w+)(\\s+(as\\s+)?(?P<alias1>\\w+))?(\\s+(union|where|left|right|outer|inner))?)|(\\s+join\\s+(?P<table2>\\w+)\\s+((as\\s+)?(\\w+)\\s+)?on)"
 	r, err := regexp.Compile(reg)
 	if err != nil {
 		return []string{}, err
@@ -269,7 +269,7 @@ func ExtractTableNames(fromSQL string) (rets []string, err error) {
 	finds := r.FindAllStringSubmatch(fromSQL, -1)
 	for _, v := range finds {
 		for ii, vv := range v {
-			if (n1[ii] == "table1" || n1[ii] == "table2") && vv != "" {
+			if (n1[ii] == "table0" || n1[ii] == "table1" || n1[ii] == "table2") && vv != "" {
 				// fmt.Println("=>", n1[ii], vv)
 				rets = append(rets, string(vv))
 			}

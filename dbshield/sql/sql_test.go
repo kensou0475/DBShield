@@ -12,7 +12,7 @@ import (
 func TestClassify(t *testing.T) {
 	testcases := []struct {
 		sql  string
-		want int
+		want string
 	}{
 		{"select ...", sql.TypeDML},
 		{"    select ...", sql.TypeDML},
@@ -181,6 +181,73 @@ func TestExtractTableNames(t *testing.T) {
 			in:  "select count(*) as count from table1 as a left join table2 as b on a.user_id = b.user_id where a.title like '%Cloth%'",
 			out: []string{"table1", "table2"},
 		},
+		{
+			in: `CREATE TABLE test (
+				PersonID int,
+				LastName varchar(255),
+				FirstName varchar(255),
+				Address varchar(255),
+				City varchar(255) 
+			);`,
+			out: []string{"test"},
+		},
+		{
+			in:  "DROP TABLE test;",
+			out: []string{"test"},
+		},
+		{
+			in:  "ALTER TABLE test ADD column_name datatype;",
+			out: []string{"test"},
+		},
+		{
+			in:  "CREATE DATABASE testDB;",
+			out: []string{},
+		},
+		{
+			in:  "DROP DATABASE testDB;",
+			out: []string{},
+		},
+		{
+			in: `SELECT column_name(s)
+			FROM test1
+			LEFT JOIN test2 ON table1.column_name = table2.column_name;`,
+			out: []string{"test1", "test2"},
+		},
+		{
+			in: `SELECT column_name(s)
+			FROM test1
+			RIGHT JOIN test2 ON table1.column_name = table2.column_name;`,
+			out: []string{"test1", "test2"},
+		},
+		{
+			in: `SELECT column_name(s)
+			FROM test1
+			FULL OUTER JOIN test2 ON table1.column_name = table2.column_name;`,
+			out: []string{"test1", "test2"},
+		},
+		// {
+		// 	in: `SELECT A.CustomerName AS CustomerName1, B.CustomerName AS CustomerName2, A.City
+		// 	FROM Customers A, Customers B
+		// 	WHERE A.CustomerID <> B.CustomerID
+		// 	AND A.City = B.City
+		// 	ORDER BY A.City;`,
+		// 	out: []string{},
+		// },
+		{
+			in: `SELECT 'Customer' As Type, ContactName, City, Country
+			FROM Customers
+			UNION
+			SELECT 'Supplier', ContactName, City, Country
+			FROM Suppliers;`,
+			out: []string{"Customers", "Suppliers"},
+		},
+		// {
+		// 	in: `SELECT Customers.CustomerName, Orders.OrderID
+		// 	INTO CustomersOrderBackup2017
+		// 	FROM Customers
+		// 	LEFT JOIN Orders ON Customers.CustomerID = Orders.CustomerID;`,
+		// 	out: []string{"CustomersOrderBackup2017", "Customers", "Orders"},
+		// },
 	}
 
 	for _, tc := range testcases {
