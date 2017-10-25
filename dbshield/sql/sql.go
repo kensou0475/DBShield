@@ -23,34 +23,33 @@ const (
 
 //Statement
 const (
-	StmtSelect = iota
-	StmtInsert
-	StmtReplace
-	StmtMerge
-	StmtCall
-	StmtUpdate
-	StmtDelete
-	StmtDDL
-	StmtBegin
-	StmtCommit
-	StmtRollback
-	StmtSavePoint
-	StmtSet
-	StmtShow
-	StmtUse
-	StmtCreate
-	StmtAlert
-	StmtDrop
-	StmtTruncate
-	StmtComment
-	StmtRename
-	StmtGrant
-	StmtRevoke
-	StmtExplainPlan
-	StmtLockTable
-	StmtSetTransaction
-	StmtOther
-	StmtUnknown
+	StmtSelect         = "SELECT"
+	StmtInsert         = "INSERT"
+	StmtReplace        = "REPLACE"
+	StmtMerge          = "MERE"
+	StmtCall           = "CALL"
+	StmtUpdate         = "UPDATE"
+	StmtDelete         = "DELETE"
+	StmtBegin          = "BEGIN"
+	StmtCommit         = "COMMIT"
+	StmtRollback       = "ROLLBACK"
+	StmtSavePoint      = "SAVEPOINT"
+	StmtSet            = "SET"
+	StmtShow           = "SHOW"
+	StmtUse            = "USE"
+	StmtCreate         = "CREATE"
+	StmtAlert          = "ALERT"
+	StmtDrop           = "DROP"
+	StmtTruncate       = "TRUNCATE"
+	StmtComment        = "COMMENT"
+	StmtRename         = "RENAME"
+	StmtGrant          = "GRANT"
+	StmtRevoke         = "REVOKE"
+	StmtExplainPlan    = "EXPLAINPLAN"
+	StmtLockTable      = "LOCKTABLE"
+	StmtSetTransaction = "SETTRANSATION"
+	StmtOther          = "OTHER"
+	StmtUnknown        = "UNKNOWN"
 )
 
 //Classify 分类sql语句
@@ -87,8 +86,8 @@ func Classify(sql string) string {
 	return "Unknown"
 }
 
-//GetType 获取sql语句类型
-func GetType(sql string) int {
+//GetStmtType 获取sql语句类型
+func GetStmtType(sql string) string {
 	trimmed := sqlparser.StripLeadingComments(sql)
 
 	firstWord := trimmed
@@ -161,6 +160,7 @@ type QueryAction struct {
 	QueryContext
 	Action   string
 	Duration time.Duration
+	Tables   []string
 }
 
 //Unmarshal []byte into QueryContext

@@ -306,7 +306,7 @@ func processContext(context sql.QueryContext) (action string, err error) {
 		action = "learning"
 		return action, training.AddToTrainingSet(context)
 	}
-	if config.Config.ActionFunc != nil && !training.CheckQuery(context) && !training.CheckPermission(context) {
+	if config.Config.ActionFunc != nil && !training.CheckPermission(context) && !training.CheckQuery(context) {
 		action = "drop"
 		processQueryRecording(sql.QueryAction{QueryContext: context, Action: action, Duration: time.Duration(0) * time.Second})
 		return action, config.Config.ActionFunc()
@@ -316,9 +316,16 @@ func processContext(context sql.QueryContext) (action string, err error) {
 }
 
 func processQueryRecording(qA sql.QueryAction) (err error) {
+	// get tables names
+	qA.Tables, err = sql.ExtractTableNames(string(qA.Query))
+	if err != nil {
+		logger.Warningf("Extract table name failed: %s", err.Error())
+		return err
+	}
+	logger.Debugf("Extract table: ", qA.Tables)
 	if config.Config.LocalQueryRecord {
 		logger.Debugf("Query recorded: %s", qA.Query)
-		config.Config.LocalDB.RecordQueryAction(qA.QueryContext, qA.Action, qA.Duration)
+		config.Config.LocalDB.RecordQueryAction(qA)
 	}
 	return nil
 }

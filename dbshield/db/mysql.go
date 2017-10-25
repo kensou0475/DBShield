@@ -93,10 +93,10 @@ type Permission struct {
 }
 
 // RecordQueryAction record query and action
-func (m *MySQL) RecordQueryAction(context sql.QueryContext, action string, elapsed time.Duration) error {
-	logger.Debugf("action: %s", action)
+func (m *MySQL) RecordQueryAction(context sql.QueryAction) error {
+	logger.Debugf("action: %s", context.Action)
 	// ms
-	elapsedMs := elapsed.Nanoseconds() / 1e6
+	elapsedMs := context.Duration.Nanoseconds() / 1e6
 
 	// 异步记录
 	go func() {
@@ -109,7 +109,7 @@ func (m *MySQL) RecordQueryAction(context sql.QueryContext, action string, elaps
 		queryAction.Database = string(context.Database)
 		// queryAction.Tables = ""
 		queryAction.Time = context.Time
-		queryAction.Action = action
+		queryAction.Action = context.Action
 		queryAction.Duration = elapsedMs
 		queryAction.UUID = m.UUID
 		id, err := o.Insert(&queryAction)
@@ -307,11 +307,67 @@ func (m *MySQL) CheckQuery(context sql.QueryContext, checkUser bool, checkSource
 }
 
 //CheckPermission check if has permission
-func (m *MySQL) CheckPermission(sql.QueryContext, bool, bool) bool {
+func (m *MySQL) CheckPermission(context sql.QueryContext, q bool, v bool) bool {
 	// get statement type
-
+	stmt := sql.GetStmtType(string(context.Query))
+	if stmt == sql.StmtUnknown {
+		return false
+	}
+	tables, _ := sql.ExtractTableNames(string(context.Query))
+	logger.Debugf("tables: ", tables)
 	// verify permission
+	o := orm.NewOrm()
+	// var permissions []*Permission
+	qs := o.QueryTable("permission")
+	var exist bool
+	if exist = qs.Filter("uuid", m.UUID).Exist(); !exist {
+		// 没有规则
+		logger.Debug("no rules")
+		return true
+	}
+	if len(tables) > 0 {
+		exist = qs.
+			Filter("db", string(context.Database)).
+			// Filter("user", string(context.User)).
+			// Filter("client", string(context.Client)).
+			Filter("permission__contains", stmt).
+			Filter("table__in", tables).
+			Filter("enable", true).
+			Filter("uuid", m.UUID).
+			Exist()
+	} else {
+		exist = qs.
+			Filter("db", string(context.Database)).
+			// Filter("user", string(context.User)).
+			// Filter("client", string(context.Client)).
+			Filter("permission__contains", stmt).
+			Filter("enable", true).
+			Filter("uuid", m.UUID).Exist()
+	}
+	if !exist {
+		return false
+	}
+	// logger.Debugf("permissions: %s", permissions)
+	// // Check if table and permission permitted
+	// for _, perm := range permissions {
+	// 	ps := strings.Split(perm.Permission, ";")
+	// 	// logger.Debugf("ps: ", ps)
+	// 	if perm.Table == "*" || perm.Table == "" {
+	// 		// logger.Debug("tables: *")
+	// 		// logger.Debugf("stmt: ", stmt)
+	// 		if ok, _ := SContains(ps, stmt); !ok {
+	// 			logger.Debugf("..... has no permission: ", ok)
+	// 			return false
+	// 		}
+	// 	} else {
 
+	// 		if in, _ := SContains(tables, perm.Table); in {
+	// 			if ok, _ := SContains(ps, stmt); !ok {
+	// 				return false
+	// 			}
+	// 		}
+	// 	}
+	// }
 	return true
 }
 
@@ -404,7 +460,7 @@ Sample: %s
 
 //InitialDB local databases
 func (m *MySQL) InitialDB(str string, syncInterval time.Duration, timeout time.Duration) error {
-	orm.Debug = false
+	orm.Debug = true
 	//InitLocalDB initail local db
 	orm.RegisterDriver("mysql", orm.DRMySQL)
 
@@ -426,7 +482,7 @@ func (m *MySQL) InitialDB(str string, syncInterval time.Duration, timeout time.D
 	// Drop table and re-create.
 	force := false
 	// Print log.
-	verbose := false
+	verbose := true
 	orm.RunSyncdb(name, force, verbose)
 	return nil
 }
