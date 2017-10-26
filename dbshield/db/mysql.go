@@ -88,7 +88,7 @@ type Permission struct {
 	// 权限, SELECT,UPDATE,DELETE,INSERT,GRANT....
 	Permission string `orm:"column(permission);type(text)"`
 	// 启用状态, true, false
-	Enable bool   `orm:"column(enable)"`
+	Enable bool   `orm:"column(enable);default(true)"`
 	UUID   string `orm:"column(uuid);size(36)"`
 }
 
