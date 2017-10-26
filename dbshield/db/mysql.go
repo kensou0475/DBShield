@@ -346,7 +346,7 @@ func (m *MySQL) CheckPermission(context sql.QueryContext, q bool, v bool) bool {
 	if len(tables) > 0 {
 		exist = qs.
 			Filter("db", string(context.Database)).
-			// Filter("user", string(context.User)).
+			Filter("user", string(context.User)).
 			// Filter("client", string(context.Client)).
 			Filter("permission__contains", stmt).
 			Filter("table__in", tables).
@@ -356,7 +356,7 @@ func (m *MySQL) CheckPermission(context sql.QueryContext, q bool, v bool) bool {
 	} else {
 		exist = qs.
 			Filter("db", string(context.Database)).
-			// Filter("user", string(context.User)).
+			Filter("user", string(context.User)).
 			// Filter("client", string(context.Client)).
 			Filter("permission__contains", stmt).
 			Filter("enable", true).
