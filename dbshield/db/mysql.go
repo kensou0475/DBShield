@@ -61,7 +61,7 @@ type Pattern struct {
 	// Example Value
 	ExampleValue string `orm:"column(example_value);null;type(text)"`
 	// 启用状态, true, false
-	Enable bool   `orm:"column(enable)"`
+	Enable bool   `orm:"column(enable);default(true)"`
 	UUID   string `orm:"column(uuid);size(36)"`
 }
 
@@ -242,6 +242,7 @@ func (m *MySQL) AddPattern(pattern []byte, context sql.QueryContext) error {
 		aPattern.Key = patternString
 		aPattern.Value = string(context.Query)
 		aPattern.UUID = m.UUID
+		aPattern.Enable = true
 		id, err := o.Insert(&aPattern)
 		if err == nil {
 			logger.Debugf("Pattern saved, ID: %d", id)
@@ -261,6 +262,7 @@ func (m *MySQL) AddPattern(pattern []byte, context sql.QueryContext) error {
 		aPattern.Key = uKeyString
 		aPattern.Value = formatPattern([]byte{0x11})
 		aPattern.UUID = m.UUID
+		aPattern.Enable = true
 		id, err := o.Insert(&aPattern)
 		if err == nil {
 			logger.Debugf("Pattern User saved, ID: %d", id)
@@ -281,6 +283,7 @@ func (m *MySQL) AddPattern(pattern []byte, context sql.QueryContext) error {
 		aPattern.Key = cKeyString
 		aPattern.Value = formatPattern([]byte{0x11})
 		aPattern.UUID = m.UUID
+		aPattern.Enable = true
 		id, err := o.Insert(&aPattern)
 		if err == nil {
 			logger.Debugf("Pattern Source saved, ID: %d", id)
@@ -298,7 +301,7 @@ func (m *MySQL) CheckQuery(context sql.QueryContext, checkUser bool, checkSource
 	pattern := sql.Pattern(context.Query)
 	patternString := formatPattern(pattern)
 	o := orm.NewOrm()
-	exist := o.QueryTable("pattern").Filter("key", patternString).Filter("uuid", m.UUID).Exist()
+	exist := o.QueryTable("pattern").Filter("key", patternString).Filter("enable", true).Filter("uuid", m.UUID).Exist()
 	if !exist {
 		return false
 	}
@@ -307,7 +310,7 @@ func (m *MySQL) CheckQuery(context sql.QueryContext, checkUser bool, checkSource
 		key.Write(pattern)
 		key.WriteString("_user_")
 		key.Write(context.User)
-		exist := o.QueryTable("pattern").Filter("key", formatPattern(key.Bytes())).Filter("uuid", m.UUID).Exist()
+		exist := o.QueryTable("pattern").Filter("key", formatPattern(key.Bytes())).Filter("enable", true).Filter("uuid", m.UUID).Exist()
 		if !exist {
 			return false
 		}
@@ -317,7 +320,7 @@ func (m *MySQL) CheckQuery(context sql.QueryContext, checkUser bool, checkSource
 		key.Write(pattern)
 		key.WriteString("_client_")
 		key.Write(context.Client)
-		exist := o.QueryTable("pattern").Filter("key", formatPattern(key.Bytes())).Filter("uuid", m.UUID).Exist()
+		exist := o.QueryTable("pattern").Filter("key", formatPattern(key.Bytes())).Filter("enable", true).Filter("uuid", m.UUID).Exist()
 		if !exist {
 			return false
 		}
