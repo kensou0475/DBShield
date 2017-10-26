@@ -116,7 +116,9 @@ func (p *Postgres) Handler() (err error) {
 		elapsed := time.Since(timeStart)
 		conAct.Duration = elapsed
 		logger.Debugf("Query elapsed: %s", elapsed)
-		processQueryRecording(*conAct)
+		if conAct.Action != "drop" {
+			processQueryRecording(*conAct)
+		}
 
 		switch buf[0] {
 		case 0x45: //Error

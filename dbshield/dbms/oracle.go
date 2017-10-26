@@ -126,7 +126,9 @@ func (o *Oracle) Handler() error {
 		elapsed := time.Since(timeStart)
 		conAct.Duration = elapsed
 		logger.Debugf("Query elapsed: %s", elapsed)
-		processQueryRecording(*conAct)
+		if conAct.Action != "drop" {
+			processQueryRecording(*conAct)
+		}
 	}
 }
 
