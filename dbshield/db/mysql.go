@@ -95,19 +95,31 @@ type Permission struct {
 // RecordQueryAction record query and action
 func (m *MySQL) RecordQueryAction(context sql.QueryAction) error {
 	logger.Debugf("action: %s", context.Action)
-	// ms
-	elapsedMs := context.Duration.Nanoseconds() / 1e6
 
 	// 异步记录
 	go func() {
+
+		// ms
+		elapsedMs := context.Duration.Nanoseconds() / 1e6
+		// table name
+		tables, _ := sql.ExtractTableNames(string(context.Query))
+		var tableString string
+		if len(tables) > 0 {
+			tableString = strings.Join(tables, ",")
+		} else {
+			tableString = ""
+		}
+
 		o := orm.NewOrm()
 		var queryAction QueryAction
 		queryAction.Query = string(context.Query)
 		queryAction.User = string(context.User)
 		queryAction.ClientIP = fourByteBigEndianToIP(context.Client)
-		// queryAction.ClientProgram = ""
+		queryAction.ClientProgram = ""
 		queryAction.Database = string(context.Database)
-		// queryAction.Tables = ""
+		queryAction.Tables = tableString
+		//TODO result
+		queryAction.QueryResult = true
 		queryAction.Time = context.Time
 		queryAction.Action = context.Action
 		queryAction.Duration = elapsedMs
@@ -126,20 +138,27 @@ func (m *MySQL) RecordQueryAction(context sql.QueryAction) error {
 func (m *MySQL) RecordAbnormal(context sql.QueryContext, abType string) error {
 	atomic.AddUint64(&AbnormalCounter, 1)
 	go func() {
+		// table name
+		tables, _ := sql.ExtractTableNames(string(context.Query))
+		var tableString string
+		if len(tables) > 0 {
+			tableString = strings.Join(tables, ",")
+		} else {
+			tableString = ""
+		}
+
 		o := orm.NewOrm()
 		var abnormal QueryAction
-		// var sx16 = formatPattern(context.Marshal())
+		// var sx16 = formatPattern(context.Marshal())  // pattern
 		abnormal.Query = string(context.Query)
 		abnormal.User = string(context.User)
 		abnormal.ClientIP = fourByteBigEndianToIP(context.Client)
-		// queryAction.ClientProgram = ""
+		abnormal.ClientProgram = ""
 		abnormal.Database = string(context.Database)
-		// queryAction.Tables = ""
+		abnormal.Tables = tableString
 		abnormal.Time = context.Time
 		abnormal.Duration = 0
-		// queryAction.Tables = ""
-		// abnormal.Value = sx16
-		// abnormal.QueryResult = false
+		abnormal.QueryResult = false
 		abnormal.IsAbnormal = true
 		abnormal.AbnormalType = abType
 		abnormal.IsAlarm = false
@@ -317,7 +336,6 @@ func (m *MySQL) CheckPermission(context sql.QueryContext, q bool, v bool) bool {
 	logger.Debugf("tables: ", tables)
 	// verify permission
 	o := orm.NewOrm()
-	// var permissions []*Permission
 	qs := o.QueryTable("permission")
 	var exist bool
 	if exist = qs.Filter("uuid", m.UUID).Exist(); !exist {
@@ -347,27 +365,6 @@ func (m *MySQL) CheckPermission(context sql.QueryContext, q bool, v bool) bool {
 	if !exist {
 		return false
 	}
-	// logger.Debugf("permissions: %s", permissions)
-	// // Check if table and permission permitted
-	// for _, perm := range permissions {
-	// 	ps := strings.Split(perm.Permission, ";")
-	// 	// logger.Debugf("ps: ", ps)
-	// 	if perm.Table == "*" || perm.Table == "" {
-	// 		// logger.Debug("tables: *")
-	// 		// logger.Debugf("stmt: ", stmt)
-	// 		if ok, _ := SContains(ps, stmt); !ok {
-	// 			logger.Debugf("..... has no permission: ", ok)
-	// 			return false
-	// 		}
-	// 	} else {
-
-	// 		if in, _ := SContains(tables, perm.Table); in {
-	// 			if ok, _ := SContains(ps, stmt); !ok {
-	// 				return false
-	// 			}
-	// 		}
-	// 	}
-	// }
 	return true
 }
 

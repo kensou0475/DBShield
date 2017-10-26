@@ -3,7 +3,6 @@ package dbms
 import (
 	"crypto/tls"
 	"net"
-	"time"
 
 	"github.com/qiwihui/DBShield/dbshield/config"
 	"github.com/qiwihui/DBShield/dbshield/logger"
@@ -306,9 +305,9 @@ func processContext(context sql.QueryContext) (action string, err error) {
 		action = "learning"
 		return action, training.AddToTrainingSet(context)
 	}
-	if config.Config.ActionFunc != nil && !training.CheckPermission(context) && !training.CheckQuery(context) {
+	if config.Config.ActionFunc != nil && (!training.CheckPermission(context) || !training.CheckQuery(context)) {
 		action = "drop"
-		processQueryRecording(sql.QueryAction{QueryContext: context, Action: action, Duration: time.Duration(0) * time.Second})
+		// processQueryRecording(sql.QueryAction{QueryContext: context, Action: action, Duration: time.Duration(0) * time.Second})
 		return action, config.Config.ActionFunc()
 	}
 	action = "pass"
