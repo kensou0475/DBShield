@@ -409,16 +409,18 @@ func (m *MySQL) UpdateState() error {
 func (m *MySQL) Abnormals() (count int) {
 	var abnormals []*QueryAction
 	o := orm.NewOrm()
-	_, err := o.QueryTable("abnormal").Filter("uuid", m.UUID).All(&abnormals)
+	_, err := o.QueryTable("query_action").Filter("is_abnormal", true).Filter("uuid", m.UUID).All(&abnormals)
 	if err == nil && len(abnormals) > 0 {
 		logger.Debug("range abnormal")
 		for _, element := range abnormals {
 			// var c sql.QueryContext
 			// c.Unmarshal(unformatPattern(element.Value))
-			fmt.Printf("[%s] [User: %s] [Database: %s] %s\n",
+			fmt.Printf("[%s] [User: %s] [CliendIP: %s] [Database: %s] [AbnormalType: %s] %s\n",
 				element.Time.Format(time.RFC1123),
 				element.User,
+				element.ClientIP,
 				element.Database,
+				element.AbnormalType,
 				element.Query)
 			count++
 		}
