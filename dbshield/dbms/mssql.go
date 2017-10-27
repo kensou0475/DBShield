@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/qiwihui/DBShield/dbshield/db"
 	"github.com/qiwihui/DBShield/dbshield/logger"
 	"github.com/qiwihui/DBShield/dbshield/sql"
 )
@@ -74,6 +75,7 @@ func (m *MSSQL) Handler() error {
 		logger.Warning("Login failed")
 		return nil
 	}
+	sessionID := db.RandString(32)
 	for {
 		var buf []byte
 		buf, err = m.reader(m.client)
@@ -94,6 +96,7 @@ func (m *MSSQL) Handler() error {
 				Time:     time.Now(),
 			}
 			conAct.QueryContext = context
+			conAct.SessionID = sessionID
 			action, _ := processContext(context)
 			conAct.Action = action
 		}

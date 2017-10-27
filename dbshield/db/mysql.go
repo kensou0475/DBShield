@@ -24,7 +24,8 @@ type MySQL struct {
 
 //QueryAction 记录所有操作
 type QueryAction struct {
-	ID int `orm:"column(id)"`
+	ID        int    `orm:"column(id)"`
+	SessionID string `orm:"column(session_id);null;size(32)"`
 	// 实际查询语句
 	Query string `orm:"column(query);null;type(text)"`
 	// 查询用户
@@ -112,6 +113,7 @@ func (m *MySQL) RecordQueryAction(context sql.QueryAction) error {
 
 		o := orm.NewOrm()
 		var queryAction QueryAction
+		queryAction.SessionID = context.SessionID
 		queryAction.Query = string(context.Query)
 		queryAction.User = string(context.User)
 		queryAction.ClientIP = fourByteBigEndianToIP(context.Client)
@@ -150,6 +152,7 @@ func (m *MySQL) RecordAbnormal(context sql.QueryContext, abType string) error {
 		o := orm.NewOrm()
 		var abnormal QueryAction
 		// var sx16 = formatPattern(context.Marshal())  // pattern
+		abnormal.SessionID = context.SessionID
 		abnormal.Query = string(context.Query)
 		abnormal.User = string(context.User)
 		abnormal.ClientIP = fourByteBigEndianToIP(context.Client)

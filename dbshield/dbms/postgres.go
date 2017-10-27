@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/qiwihui/DBShield/dbshield/db"
 	"github.com/qiwihui/DBShield/dbshield/logger"
 	"github.com/qiwihui/DBShield/dbshield/sql"
 )
@@ -66,6 +67,7 @@ func (p *Postgres) Handler() (err error) {
 		logger.Warning("Login failed")
 		return
 	}
+	sessionID := db.RandString(32)
 	for {
 		var buf []byte
 		//Read client request
@@ -86,6 +88,7 @@ func (p *Postgres) Handler() (err error) {
 				Time:     time.Now(),
 			}
 			conAct.QueryContext = context
+			conAct.SessionID = sessionID
 			action, _ := processContext(context)
 			conAct.Action = action
 

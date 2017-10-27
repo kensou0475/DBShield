@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/qiwihui/DBShield/dbshield/db"
 	"github.com/qiwihui/DBShield/dbshield/logger"
 	"github.com/qiwihui/DBShield/dbshield/sql"
 )
@@ -65,6 +66,8 @@ func (m *MySQL) Handler() error {
 		logger.Warning("Login failed")
 		return nil
 	}
+	// login successful, generate sessionID
+	sessionID := db.RandString(32)
 	for {
 		var buf []byte
 		buf, err = ReadPacket(m.client)
@@ -91,6 +94,7 @@ func (m *MySQL) Handler() error {
 				Time:     time.Now(),
 			}
 			conAct.QueryContext = context
+			conAct.SessionID = sessionID
 			action, _ := processContext(context)
 			conAct.Action = action
 			// case 0x04: //Show fields

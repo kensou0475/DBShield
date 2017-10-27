@@ -148,11 +148,12 @@ func GetStmtType(sql string) string {
 
 //QueryContext holds information around query
 type QueryContext struct {
-	Query    []byte
-	User     []byte
-	Client   []byte
-	Database []byte
-	Time     time.Time
+	Query     []byte
+	User      []byte
+	Client    []byte
+	Database  []byte
+	Time      time.Time
+	SessionID string
 }
 
 // QueryAction action and duration

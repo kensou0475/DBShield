@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/qiwihui/DBShield/dbshield/db"
 	"github.com/qiwihui/DBShield/dbshield/logger"
 	"github.com/qiwihui/DBShield/dbshield/sql"
 )
@@ -56,6 +57,8 @@ func (o *Oracle) Handler() error {
 	defer handlePanic()
 	defer o.Close()
 
+	sessionID := db.RandString(32)
+
 	for {
 		buf, err := o.readPacket(o.client)
 		if err != nil {
@@ -101,6 +104,7 @@ func (o *Oracle) Handler() error {
 							Time:     time.Now(),
 						}
 						conAct.QueryContext = context
+						conAct.SessionID = sessionID
 						action, _ := processContext(context)
 						conAct.Action = action
 					case 0x76: // Reading username
