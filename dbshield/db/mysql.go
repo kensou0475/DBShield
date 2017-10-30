@@ -25,7 +25,8 @@ type MySQL struct {
 //QueryAction 记录所有操作
 type QueryAction struct {
 	ID        int    `orm:"column(id)"`
-	SessionID string `orm:"column(session_id);null;size(32)"`
+	SessionID string `orm:"column(flow_id);null;size(32)"`
+	FlowInfo  string `orm:"column(flow_info);null;type(text)"`
 	// 实际查询语句
 	Query string `orm:"column(query);null;type(text)"`
 	// 查询用户
@@ -33,6 +34,9 @@ type QueryAction struct {
 	// 查询客户端信息
 	ClientIP      string `orm:"column(client_ip);null;size(39)"`
 	ClientProgram string `orm:"column(client_pm);null;size(128)"`
+	// server info
+	ServerIP   string `orm:"column(server_ip);null;size(39)"`
+	ServerPort int    `orm:"column(server_port);null"`
 	// 执行的数据库和表
 	Database string `orm:"column(db);null;size(128)"`
 	Tables   string `orm:"column(tables);null;type(text)"`
@@ -48,8 +52,10 @@ type QueryAction struct {
 	// 处理结果：none, learning, pass, drop
 	Action string `orm:"column(action);size(36);defult(pass)"`
 	// 告警
-	IsAlarm bool   `orm:"column(is_alarm);default(false)"`
-	UUID    string `orm:"column(uuid);size(36)"`
+	IsAlarm bool `orm:"column(is_alarm);default(false)"`
+	// 是否分析
+	Analysed bool   `orm:"column(analysed);default(false)"`
+	UUID     string `orm:"column(uuid);size(36)"`
 }
 
 //Pattern record trainging set
