@@ -321,6 +321,7 @@ func processQueryRecording(qA sql.QueryAction) (err error) {
 		logger.Warningf("Extract table name failed: %s", err.Error())
 		return err
 	}
+	qA.QueryType = sql.GetStmtType(string(qA.Query))
 	logger.Debugf("Extract table: ", qA.Tables)
 	if config.Config.LocalQueryRecord {
 		logger.Debugf("Query recorded: %s", qA.Query)

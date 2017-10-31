@@ -54,8 +54,13 @@ type QueryAction struct {
 	// 告警
 	IsAlarm bool `orm:"column(is_alarm);default(false)"`
 	// 是否分析
-	Analysed bool   `orm:"column(analysed);default(false)"`
-	UUID     string `orm:"column(uuid);size(36)"`
+	Analysed bool `orm:"column(analysed);default(false)"`
+	// sql type
+	SQLType string `orm:"column(sql_type);null;size(32)"`
+	// dbshield or others
+	Tool string `orm:"column(tool);null;size(32)"`
+	// 区分不同
+	UUID string `orm:"column(uuid);size(36)"`
 }
 
 //Pattern record trainging set
@@ -127,6 +132,8 @@ func (m *MySQL) RecordQueryAction(context sql.QueryAction) error {
 		queryAction.Database = string(context.Database)
 		queryAction.Tables = tableString
 		//TODO result
+		queryAction.SQLType = context.QueryType
+		queryAction.Tool = "dbshield"
 		queryAction.QueryResult = true
 		queryAction.Time = context.Time
 		queryAction.Action = context.Action
@@ -148,6 +155,7 @@ func (m *MySQL) RecordAbnormal(context sql.QueryContext, abType string) error {
 	go func() {
 		// table name
 		tables, _ := sql.ExtractTableNames(string(context.Query))
+		queryType := sql.GetStmtType(string(context.Query))
 		var tableString string
 		if len(tables) > 0 {
 			tableString = strings.Join(tables, ",")
@@ -160,6 +168,8 @@ func (m *MySQL) RecordAbnormal(context sql.QueryContext, abType string) error {
 		// var sx16 = formatPattern(context.Marshal())  // pattern
 		abnormal.SessionID = context.SessionID
 		abnormal.Query = string(context.Query)
+		abnormal.Tool = "dbshield"
+		abnormal.SQLType = queryType
 		abnormal.User = string(context.User)
 		abnormal.ClientIP = fourByteBigEndianToIP(context.Client)
 		abnormal.ClientProgram = ""

@@ -159,9 +159,10 @@ type QueryContext struct {
 // QueryAction action and duration
 type QueryAction struct {
 	QueryContext
-	Action   string
-	Duration time.Duration
-	Tables   []string
+	Action    string
+	Duration  time.Duration
+	Tables    []string
+	QueryType string
 }
 
 //Unmarshal []byte into QueryContext
