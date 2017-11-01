@@ -78,6 +78,22 @@ func (m *MySQL) Handler() error {
 	defer m.Close()
 
 	go m.MySQLReadServerWriteClient(m.server, m.client)
+	{
+		//receive client login packet
+		buf, err := ReadPacket(m.client)
+		if err != nil {
+			return err
+		}
+
+		data := buf[4:]
+		m.username, m.currentDB = MySQLGetUsernameDB(data)
+
+		//Send Login Request
+		_, err = m.server.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
 
 	// success, err := m.handleLogin()
 	// if err != nil {
@@ -97,7 +113,6 @@ func (m *MySQL) Handler() error {
 			return err
 		}
 		data := buf[4:]
-		m.username, m.currentDB = MySQLGetUsernameDB(data)
 
 		conAct := new(sql.QueryAction)
 
