@@ -93,10 +93,10 @@ func generateDBMS() (utils.DBMS, func(io.Reader) ([]byte, error)) {
 func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
 	d, reader := generateDBMS()
 	// delay
-	tcpConn := listenConn.(*net.TCPConn)
-	tcpConn.SetNoDelay(false)
-	// tcpConn.SetKeepAlive(true)
-	listenConn = tcpConn
+	// tcpConn := listenConn.(*net.TCPConn)
+	// tcpConn.SetNoDelay(false)
+	// // tcpConn.SetKeepAlive(true)
+	// listenConn = tcpConn
 
 	logger.Debugf("Connected from: %s", listenConn.RemoteAddr())
 	serverConn, err := net.DialTCP("tcp", nil, serverAddr)
@@ -105,14 +105,23 @@ func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
 		listenConn.Close()
 		return err
 	}
-	serverConn.SetNoDelay(false)
+	// serverConn.SetNoDelay(false)
 	// serverConn.SetKeepAlive(true)
-	if err := SetConnTimeout(listenConn); err != nil {
-		return err
+	// if err := SetConnTimeout(listenConn); err != nil {
+	// 	return err
+	// }
+	// if err := SetConnTimeout(serverConn); err != nil {
+	// 	return err
+	// }
+
+	if config.Config.Timeout > 0 {
+		tcpCli := listenConn.(*net.TCPConn)
+		tcpCli.SetNoDelay(false)
+		tcpCli.SetKeepAlive(true)
+		serverConn.SetNoDelay(false)
+		serverConn.SetKeepAlive(true)
 	}
-	if err := SetConnTimeout(serverConn); err != nil {
-		return err
-	}
+
 	logger.Debugf("Connected to: %s", serverConn.RemoteAddr())
 	d.SetSockets(listenConn, serverConn)
 	d.SetCertificate(config.Config.TLSCertificate, config.Config.TLSPrivateKey)

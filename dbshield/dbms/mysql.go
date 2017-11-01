@@ -54,27 +54,50 @@ func (m *MySQL) DefaultPort() uint {
 	return 3306
 }
 
+//MySQLReadServerWriteClient server to client
+func (m *MySQL) MySQLReadServerWriteClient(src, dst net.Conn) error {
+	defer handlePanic()
+	defer m.Close()
+	for {
+		var buf []byte
+		buf, err := ReadPacket(src)
+		if err != nil {
+			return err
+		}
+
+		_, err = dst.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
+}
+
 //Handler gets incoming requests
 func (m *MySQL) Handler() error {
 	defer handlePanic()
 	defer m.Close()
-	success, err := m.handleLogin()
-	if err != nil {
-		return err
-	}
-	if !success {
-		logger.Warning("Login failed")
-		return nil
-	}
+
+	go m.MySQLReadServerWriteClient(m.server, m.client)
+
+	// success, err := m.handleLogin()
+	// if err != nil {
+	// 	return err
+	// }
+	// if !success {
+	// 	logger.Warning("Login failed")
+	// 	return nil
+	// }
+
 	// login successful, generate sessionID
 	sessionID := db.RandString(32)
 	for {
 		var buf []byte
-		buf, err = ReadPacket(m.client)
+		buf, err := ReadPacket(m.client)
 		if err != nil || len(buf) < 5 {
 			return err
 		}
 		data := buf[4:]
+		m.username, m.currentDB = MySQLGetUsernameDB(data)
 
 		conAct := new(sql.QueryAction)
 
@@ -109,10 +132,10 @@ func (m *MySQL) Handler() error {
 			return err
 		}
 		//Recive response
-		err = readWrite(m.server, m.client, m.reader)
-		if err != nil {
-			return err
-		}
+		// err = readWrite(m.server, m.client, m.reader)
+		// if err != nil {
+		// 	return err
+		// }
 		elapsed := time.Since(timeStart)
 		conAct.Duration = elapsed
 		logger.Debugf("Query elapsed: %s", elapsed)
@@ -227,7 +250,7 @@ func MySQLReadPacket(src io.Reader) ([]byte, error) {
 		}
 
 		// eof or this was the last packet
-		if eof || pktLen < maxMySQLPayloadLen {
+		if eof {
 			if prevData == nil {
 				return data, nil
 			}

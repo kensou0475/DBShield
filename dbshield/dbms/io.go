@@ -16,6 +16,10 @@ func ReadPacket(conn io.Reader) ([]byte, error) {
 	buf := bytes.Buffer{}
 	for {
 		n, err := conn.Read(data)
+		// if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
+		// 	logger.Debugf("ReadPacket error: ", err)
+		//  return nil, err
+		// }
 		if err != nil {
 			return nil, err
 		}
