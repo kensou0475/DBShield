@@ -59,6 +59,8 @@ type QueryAction struct {
 	SQLType string `orm:"column(sql_type);null;size(32)"`
 	// dbshield or others
 	Tool string `orm:"column(tool);null;size(32)"`
+	// 模式
+	Pattern string `orm:"column(pattern);null;type(text)"`
 	// 区分不同
 	UUID string `orm:"column(uuid);size(36)"`
 }
@@ -138,6 +140,7 @@ func (m *MySQL) RecordQueryAction(context sql.QueryAction) error {
 		queryAction.Time = context.Time
 		queryAction.Action = context.Action
 		queryAction.Duration = elapsedMs
+		queryAction.Pattern = formatPattern(sql.Pattern(context.Query))
 		queryAction.UUID = m.UUID
 		id, err := o.Insert(&queryAction)
 		if err != nil {
@@ -182,6 +185,7 @@ func (m *MySQL) RecordAbnormal(context sql.QueryContext, abType string) error {
 		abnormal.AbnormalType = abType
 		abnormal.IsAlarm = false
 		abnormal.Action = "drop"
+		abnormal.Pattern = formatPattern(sql.Pattern(context.Query))
 		abnormal.UUID = m.UUID
 		id, err := o.Insert(&abnormal)
 		if err == nil {
@@ -481,7 +485,7 @@ Sample: %s
 
 //InitialDB local databases
 func (m *MySQL) InitialDB(str string, syncInterval time.Duration, timeout time.Duration) error {
-	orm.Debug = true
+	orm.Debug = false
 	//InitLocalDB initail local db
 	orm.RegisterDriver("mysql", orm.DRMySQL)
 
@@ -503,7 +507,7 @@ func (m *MySQL) InitialDB(str string, syncInterval time.Duration, timeout time.D
 	// Drop table and re-create.
 	force := false
 	// Print log.
-	verbose := true
+	verbose := false
 	orm.RunSyncdb(name, force, verbose)
 	return nil
 }

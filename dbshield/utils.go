@@ -107,13 +107,11 @@ func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
 	}
 	serverConn.SetNoDelay(false)
 	// serverConn.SetKeepAlive(true)
-	if config.Config.Timeout > 0 {
-		if err = listenConn.SetDeadline(time.Now().Add(config.Config.Timeout)); err != nil {
-			return err
-		}
-		if err = serverConn.SetDeadline(time.Now().Add(config.Config.Timeout)); err != nil {
-			return err
-		}
+	if err := SetConnTimeout(listenConn); err != nil {
+		return err
+	}
+	if err := SetConnTimeout(serverConn); err != nil {
+		return err
 	}
 	logger.Debugf("Connected to: %s", serverConn.RemoteAddr())
 	d.SetSockets(listenConn, serverConn)
@@ -124,4 +122,14 @@ func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
 		logger.Warning(err)
 	}
 	return err
+}
+
+// SetConnTimeout for connection
+func SetConnTimeout(conn net.Conn) error {
+	if config.Config.Timeout > 0 {
+		if err := conn.SetDeadline(time.Now().Add(config.Config.Timeout)); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -53,6 +53,9 @@ func GenerateLocalDB(dbName string, dbID string) BASE {
 
 func fourByteBigEndianToIP(data []byte) string {
 	ip := make(net.IP, 4)
+	if len(data) != 4 {
+		return ""
+	}
 	binary.BigEndian.PutUint32(ip, binary.BigEndian.Uint32(data))
 	return ip.String()
 }

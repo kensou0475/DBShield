@@ -226,7 +226,8 @@ func MySQLReadPacket(src io.Reader) ([]byte, error) {
 			eof = tail[0] == 5 && tail[1] == 0 && tail[2] == 0 && tail[4] == 0xfe
 		}
 
-		if eof {
+		// eof or this was the last packet
+		if eof || pktLen < maxMySQLPayloadLen {
 			if prevData == nil {
 				return data, nil
 			}

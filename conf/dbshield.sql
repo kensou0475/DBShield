@@ -83,6 +83,7 @@ CREATE TABLE `query_action` (
   `uuid` varchar(36) NOT NULL DEFAULT '',
   `sql_type` varchar(32) DEFAULT NULL,
   `tool` varchar(32) DEFAULT NULL,
+  `pattern` longtext,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
