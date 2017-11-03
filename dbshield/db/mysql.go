@@ -33,7 +33,7 @@ type QueryAction struct {
 	User string `orm:"column(user);null;size(128)"`
 	// 查询客户端信息
 	ClientIP      string `orm:"column(client_ip);null;size(39)"`
-	ClientProgram string `orm:"column(client_pm);null;size(128)"`
+	ClientProgram string `orm:"column(client_program);null;size(128)"`
 	// server info
 	ServerIP   string `orm:"column(server_ip);null;size(39)"`
 	ServerPort int    `orm:"column(server_port);null"`
