@@ -67,7 +67,7 @@ CREATE TABLE `query_action` (
   `query` longtext,
   `user` varchar(128) DEFAULT NULL,
   `client_ip` varchar(39) DEFAULT NULL,
-  `client_pm` varchar(128) DEFAULT NULL,
+  `client_program` varchar(128) DEFAULT NULL,
   `server_ip` varchar(39) DEFAULT NULL,
   `server_port` int(11) DEFAULT NULL,
   `db` varchar(128) DEFAULT NULL,
