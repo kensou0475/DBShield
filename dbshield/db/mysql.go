@@ -131,6 +131,8 @@ func (m *MySQL) RecordQueryAction(context sql.QueryAction) error {
 		queryAction.User = string(context.User)
 		queryAction.ClientIP = fourByteBigEndianToIP(context.Client)
 		queryAction.ClientProgram = ""
+		queryAction.ServerIP = context.ServerIP
+		queryAction.ServerPort = int(context.ServerPort)
 		queryAction.Database = string(context.Database)
 		queryAction.Tables = tableString
 		//TODO result
@@ -176,6 +178,8 @@ func (m *MySQL) RecordAbnormal(context sql.QueryContext, abType string) error {
 		abnormal.User = string(context.User)
 		abnormal.ClientIP = fourByteBigEndianToIP(context.Client)
 		abnormal.ClientProgram = ""
+		abnormal.ServerIP = context.ServerIP
+		abnormal.ServerPort = int(context.ServerPort)
 		abnormal.Database = string(context.Database)
 		abnormal.Tables = tableString
 		abnormal.Time = context.Time

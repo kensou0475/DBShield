@@ -322,6 +322,8 @@ func processQueryRecording(qA sql.QueryAction) (err error) {
 		return err
 	}
 	qA.QueryType = sql.GetStmtType(string(qA.Query))
+	qA.ServerIP = config.Config.TargetIP
+	qA.ServerPort = config.Config.TargetPort
 	logger.Debugf("Extract table: ", qA.Tables)
 	if config.Config.LocalQueryRecord {
 		logger.Debugf("Query recorded: %s", qA.Query)
